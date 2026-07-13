@@ -465,6 +465,16 @@ h1, h2, h3, h4, h5, h6 {
   animation: floatVector 4s ease-in-out infinite;
 }
 
+.slide-img {
+  width: 240px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+}
+
 @keyframes floatVector {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
