@@ -468,11 +468,13 @@ h1, h2, h3, h4, h5, h6 {
 .slide-img {
   width: 240px;
   height: 240px;
-  object-fit: cover;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.2);
+  object-fit: contain;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55)); /* Dynamic shape shadow */
+  transition: transform 0.3s ease;
+}
+
+.slide-img:hover {
+  transform: scale(1.06);
 }
 
 @keyframes floatVector {
