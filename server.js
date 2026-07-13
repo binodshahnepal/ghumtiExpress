@@ -53,13 +53,23 @@ const upload = multer({
 // ==========================================
 // IN-MEMORY DATABASE STRUCTURE (SEEDED DATA)
 // ==========================================
-const db = {
+const DB_FILE = path.join(__dirname, 'db.json');
+
+function saveDatabase() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save persistent db.json database:', err);
+  }
+}
+
+const defaultDb = {
   users: [
     {
       username: 'customer@gmail.com',
       password: 'password123',
       fullName: 'Hari Bahadur',
-      dob: '1995-05-15', // Legal age
+      dob: '1995-05-15',
       role: 'customer'
     },
     {
@@ -188,13 +198,32 @@ const db = {
   ]
 };
 
+let db;
+if (fs.existsSync(DB_FILE)) {
+  try {
+    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+    console.log('[INFO] Loaded persistent database from db.json');
+  } catch (err) {
+    console.error('[ERROR] Failed parsing db.json, falling back to seeds:', err);
+    db = defaultDb;
+  }
+} else {
+  db = defaultDb;
+  saveDatabase();
+  console.log('[INFO] Persistent database initialized in db.json');
+}
+
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
 function logEvent(level, event, details) {
   const timestamp = new Date().toISOString();
   db.logs.unshift({ timestamp, level, event, details });
+  if (db.logs.length > 100) {
+    db.logs = db.logs.slice(0, 100);
+  }
   console.log(`[${level.toUpperCase()}] ${event}: ${details}`);
+  saveDatabase();
 }
 
 function calculateAge(dobString) {
@@ -213,6 +242,29 @@ function generateTransactionUuid(orderId, attemptCount) {
   return `${orderId}-ATT${attemptCount}`;
 }
 
+// PBKDF2 Password hashing & verification utility
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return `pbkdf2$1000$${salt}$${hash}`;
+}
+
+function verifyPassword(inputPassword, storedPassword) {
+  if (!storedPassword.startsWith('pbkdf2$')) {
+    // Fallback: Verify legacy plain text database seed password matches
+    return inputPassword === storedPassword;
+  }
+  const [algo, iterations, salt, hash] = storedPassword.split('$');
+  const inputHash = crypto.pbkdf2Sync(
+    inputPassword, 
+    salt, 
+    parseInt(iterations), 
+    64, 
+    'sha512'
+  ).toString('hex');
+  return inputHash === hash;
+}
+
 // ==========================================
 // AUTHENTICATION API
 // ==========================================
@@ -227,7 +279,13 @@ app.post('/api/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'User already exists.' });
   }
 
-  const newUser = { username, password, fullName, dob, role: 'customer' };
+  const newUser = { 
+    username, 
+    password: hashPassword(password), 
+    fullName, 
+    dob, 
+    role: 'customer' 
+  };
   db.users.push(newUser);
   logEvent('info', 'User Signup', `Customer ${username} registered successfully. DOB: ${dob}`);
   res.json({ success: true, user: { username, fullName, dob, role: 'customer' } });
@@ -235,10 +293,17 @@ app.post('/api/auth/signup', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
-  const user = db.users.find(u => u.username === username && u.password === password);
-  if (!user) {
+  const user = db.users.find(u => u.username === username);
+  if (!user || !verifyPassword(password, user.password)) {
     return res.status(401).json({ error: 'Invalid username or password.' });
   }
+  
+  // Auto-upgrade legacy plain text seed to secure hash on successful login
+  if (!user.password.startsWith('pbkdf2$')) {
+    user.password = hashPassword(password);
+    logEvent('info', 'Auth Security Upgrade', `Upgraded password storage to secure pbkdf2 for user '${username}'`);
+  }
+
   res.json({ success: true, user: { username: user.username, fullName: user.fullName, dob: user.dob, role: user.role } });
 });
 
