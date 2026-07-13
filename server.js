@@ -105,6 +105,8 @@ const db = {
       subcategoryId: 1,
       price: 3400,
       originalPrice: 3800,
+      costPrice: 2400,
+      mrp: 3800,
       stock: 10,
       isAgeRestricted: true,
       imageUrl: '/placeholder_whiskey.png',
@@ -118,6 +120,8 @@ const db = {
       subcategoryId: 2,
       price: 2100,
       originalPrice: 2400,
+      costPrice: 1500,
+      mrp: 2400,
       stock: 15,
       isAgeRestricted: true,
       imageUrl: '/placeholder_rum.png',
@@ -131,6 +135,8 @@ const db = {
       subcategoryId: 6,
       price: 1250,
       originalPrice: 1500,
+      costPrice: 850,
+      mrp: 1500,
       stock: 20,
       isAgeRestricted: false,
       imageUrl: '/placeholder_coffee.png',
@@ -144,6 +150,8 @@ const db = {
       subcategoryId: 3,
       price: 110,
       originalPrice: 110,
+      costPrice: 80,
+      mrp: 110,
       stock: 50,
       isAgeRestricted: false,
       imageUrl: '/placeholder_milk.png',
@@ -157,6 +165,8 @@ const db = {
       subcategoryId: 4,
       price: 60,
       originalPrice: 75,
+      costPrice: 42,
+      mrp: 75,
       stock: 80,
       isAgeRestricted: false,
       imageUrl: '/placeholder_noodles.png',
@@ -283,7 +293,7 @@ app.get('/api/products', (req, res) => {
 });
 
 app.post('/api/products', upload.single('image'), (req, res) => {
-  const { name, categoryId, subcategoryId, price, stock, isAgeRestricted } = req.body;
+  const { name, categoryId, subcategoryId, price, stock, isAgeRestricted, costPrice, mrp } = req.body;
   if (!name || !categoryId || !subcategoryId || !price || stock === undefined) {
     return res.status(400).json({ error: 'Product name, category, subcategory, price, and stock are required.' });
   }
@@ -291,13 +301,19 @@ app.post('/api/products', upload.single('image'), (req, res) => {
   const id = db.products.length > 0 ? Math.max(...db.products.map(p => p.id)) + 1 : 1;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
 
+  const sellingPrice = parseFloat(price);
+  const parsedMRP = mrp ? parseFloat(mrp) : sellingPrice;
+  const parsedCost = costPrice ? parseFloat(costPrice) : (sellingPrice * 0.7);
+
   const newProduct = {
     id,
     name,
     categoryId: parseInt(categoryId),
     subcategoryId: parseInt(subcategoryId),
-    price: parseFloat(price),
-    originalPrice: parseFloat(price),
+    price: sellingPrice,
+    originalPrice: parsedMRP,
+    costPrice: parsedCost,
+    mrp: parsedMRP,
     stock: parseInt(stock),
     isAgeRestricted: isAgeRestricted === 'true' || isAgeRestricted === true,
     imageUrl: imageUrl,
@@ -313,7 +329,7 @@ app.post('/api/products', upload.single('image'), (req, res) => {
 // Edit product details
 app.put('/api/products/:id', upload.single('image'), (req, res) => {
   const productId = parseInt(req.params.id);
-  const { name, price, stock, isAgeRestricted, categoryId, subcategoryId } = req.body;
+  const { name, price, stock, isAgeRestricted, categoryId, subcategoryId, costPrice, mrp } = req.body;
   
   const product = db.products.find(p => p.id === productId);
   if (!product) {
@@ -321,9 +337,11 @@ app.put('/api/products/:id', upload.single('image'), (req, res) => {
   }
 
   if (name) product.name = name;
-  if (price) {
-    product.price = parseFloat(price);
-    product.originalPrice = parseFloat(price); // sync
+  if (price) product.price = parseFloat(price);
+  if (costPrice) product.costPrice = parseFloat(costPrice);
+  if (mrp) {
+    product.mrp = parseFloat(mrp);
+    product.originalPrice = parseFloat(mrp); // sync for crossed-out deal price display
   }
   if (stock !== undefined) product.stock = parseInt(stock);
   if (isAgeRestricted !== undefined) product.isAgeRestricted = isAgeRestricted === 'true' || isAgeRestricted === true;

@@ -1142,6 +1142,8 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
   formData.append('name', document.getElementById('productName').value);
   formData.append('categoryId', document.getElementById('productCategory').value);
   formData.append('subcategoryId', document.getElementById('productSubcategory').value);
+  formData.append('costPrice', document.getElementById('productCostPrice').value);
+  formData.append('mrp', document.getElementById('productMrp').value);
   formData.append('price', document.getElementById('productPrice').value);
   formData.append('stock', document.getElementById('productStock').value);
   formData.append('isAgeRestricted', document.getElementById('productAgeRestricted').checked);
@@ -1158,16 +1160,16 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Upload Failed', data.error, 'error');
     } else {
-      alert(`Product '${data.name}' uploaded successfully!`);
+      showAlert('Product Uploaded', `Product '${data.name}' has been successfully added to the catalog!`, 'success');
       form.reset();
       await fetchProducts();
       renderAdminProducts();
     }
   } catch (err) {
     console.error(err);
-    alert('Failed uploading product.');
+    showAlert('Upload Error', 'Failed uploading product to server.', 'error');
   }
 });
 
@@ -1623,6 +1625,8 @@ function openEditProductModal(productId) {
 
   document.getElementById('editProductId').value = prod.id;
   document.getElementById('editProductName').value = prod.name;
+  document.getElementById('editProductCostPrice').value = prod.costPrice || Math.round(prod.price * 0.7);
+  document.getElementById('editProductMrp').value = prod.mrp || prod.price;
   document.getElementById('editProductPrice').value = prod.price;
   document.getElementById('editProductStock').value = prod.stock;
   document.getElementById('editProductAgeRestricted').checked = prod.isAgeRestricted;
@@ -1658,6 +1662,8 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
   formData.append('name', document.getElementById('editProductName').value);
   formData.append('categoryId', document.getElementById('editProductCategory').value);
   formData.append('subcategoryId', document.getElementById('editProductSubcategory').value);
+  formData.append('costPrice', document.getElementById('editProductCostPrice').value);
+  formData.append('mrp', document.getElementById('editProductMrp').value);
   formData.append('price', document.getElementById('editProductPrice').value);
   formData.append('stock', document.getElementById('editProductStock').value);
   formData.append('isAgeRestricted', document.getElementById('editProductAgeRestricted').checked);
@@ -1674,9 +1680,9 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Update Failed', data.error, 'error');
     } else {
-      alert('Product updated successfully!');
+      showAlert('Product Updated', 'Product details have been successfully modified in the catalog!', 'success');
       document.getElementById('editProductModalOverlay').classList.remove('active');
       document.getElementById('editProductImage').value = ''; // clear input
       await fetchProducts();
@@ -1685,7 +1691,7 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to update product details.');
+    showAlert('Update Error', 'Failed to update product details on server.', 'error');
   }
 });
 

@@ -259,15 +259,24 @@
               </div>
             </div>
 
-            <div class="grid-2-cols">
-              <div class="form-group">
-                <label for="productPrice">Price in NPR</label>
-                <input type="number" id="productPrice" placeholder="3200" min="0" required>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="productCostPrice">Cost Price (NPR)</label>
+                <input type="number" id="productCostPrice" placeholder="2400" min="0" required>
               </div>
-              <div class="form-group">
-                <label for="productStock">Initial Stock</label>
-                <input type="number" id="productStock" placeholder="20" min="0" required>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="productMrp">MRP (NPR)</label>
+                <input type="number" id="productMrp" placeholder="3800" min="0" required>
               </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="productPrice">Selling Price (NPR)</label>
+                <input type="number" id="productPrice" placeholder="3400" min="0" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="productStock">Initial Stock</label>
+              <input type="number" id="productStock" placeholder="20" min="0" required>
             </div>
 
             <div class="form-group check-inline">
@@ -590,20 +599,32 @@
             </div>
           </div>
 
-          <div class="grid-2-cols">
-            <div class="form-group">
-              <label for="editProductPrice">Price in NPR</label>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="editProductCostPrice">Cost Price</label>
               <div class="input-wrapper">
-                <span class="input-icon">💸</span>
-                <input type="number" id="editProductPrice" min="0" required>
+                <input type="number" id="editProductCostPrice" min="0" required style="padding-left: 12px !important;">
               </div>
             </div>
-            <div class="form-group">
-              <label for="editProductStock">Current Stock</label>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="editProductMrp">MRP</label>
               <div class="input-wrapper">
-                <span class="input-icon">📈</span>
-                <input type="number" id="editProductStock" min="0" required>
+                <input type="number" id="editProductMrp" min="0" required style="padding-left: 12px !important;">
               </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="editProductPrice">Selling Price</label>
+              <div class="input-wrapper">
+                <input type="number" id="editProductPrice" min="0" required style="padding-left: 12px !important;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editProductStock">Current Stock</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📈</span>
+              <input type="number" id="editProductStock" min="0" required>
             </div>
           </div>
 
