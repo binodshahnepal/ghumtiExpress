@@ -155,6 +155,32 @@ function updateAuthUI() {
   }
 }
 
+async function initiateGuestSession() {
+  try {
+    const res = await fetch('/api/auth/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      state.currentUser = data.user;
+      localStorage.setItem('ghumti_user', JSON.stringify(data.user));
+      updateAuthUI();
+      closeOnboardingModal();
+      
+      const rSel1 = document.getElementById('roleSelector'); 
+      if (rSel1) rSel1.value = data.user.role;
+      state.currentRole = data.user.role;
+      switchView(data.user.role);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to initialize guest session.');
+  }
+}
+
 // Tab triggers
 document.getElementById('tabLoginBtn').addEventListener('click', () => {
   document.getElementById('tabLoginBtn').classList.add('active');

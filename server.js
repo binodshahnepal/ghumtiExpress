@@ -225,6 +225,21 @@ app.post('/api/auth/login', (req, res) => {
   res.json({ success: true, user: { username: user.username, fullName: user.fullName, dob: user.dob, role: user.role } });
 });
 
+app.post('/api/auth/guest', (req, res) => {
+  const guestId = 'guest_' + Math.floor(100000 + Math.random() * 900000);
+  const guestUser = {
+    username: guestId,
+    password: '',
+    fullName: 'Guest User',
+    role: 'customer',
+    dob: '2000-01-01', // Default adult age for guest checkout
+    isGuest: true
+  };
+  db.users.push(guestUser);
+  logEvent('info', 'Auth Success', `Guest session initialized as '${guestId}'`);
+  res.json({ success: true, user: guestUser });
+});
+
 // ==========================================
 // CATALOG MANAGEMENT API
 // ==========================================

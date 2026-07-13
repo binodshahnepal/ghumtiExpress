@@ -424,7 +424,7 @@
   <div class="modal-overlay" id="onboardingModalOverlay">
     <div class="onboarding-modal dashboard-card">
       <div class="modal-header">
-        <h2 style="font-family: var(--font-display); font-weight: 700; color: white;">Customer Account</h2>
+        <h2 style="font-family: var(--font-display); font-weight: 700;">Customer Account</h2>
         <button class="close-modal" id="closeOnboardingBtn">✕</button>
       </div>
       <div class="modal-body">
@@ -447,6 +447,12 @@
               <input type="password" id="loginPassword" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn-primary w-full">Sign In</button>
+            
+            <div class="or-separator">
+              <span>or</span>
+            </div>
+            
+            <button type="button" class="btn-guest-signin w-full" id="guestSignInBtn" onclick="initiateGuestSession()">👤 Continue as Guest</button>
           </form>
         </div>
 
