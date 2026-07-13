@@ -482,6 +482,70 @@ app.post('/api/subcategories', (req, res) => {
   res.json({ id: info.lastInsertRowid, name, categoryId: parseInt(categoryId) });
 });
 
+app.put('/api/categories/:id', (req, res) => {
+  const categoryId = parseInt(req.params.id);
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Category name is required.' });
+
+  const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(categoryId);
+  if (!cat) return res.status(404).json({ error: 'Category not found.' });
+
+  try {
+    db.prepare('UPDATE categories SET name = ? WHERE id = ?').run(name, categoryId);
+    logEvent('info', 'Category Updated', `Category ID ${categoryId} renamed to '${name}'.`);
+    res.json({ success: true, category: { id: categoryId, name } });
+  } catch (err) {
+    res.status(400).json({ error: 'Category name already exists.' });
+  }
+});
+
+app.delete('/api/categories/:id', (req, res) => {
+  const categoryId = parseInt(req.params.id);
+  const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(categoryId);
+  if (!cat) return res.status(404).json({ error: 'Category not found.' });
+
+  // Prevent deletion if contains active products
+  const productsCount = db.prepare('SELECT COUNT(*) as count FROM products WHERE categoryId = ?').get(categoryId).count;
+  if (productsCount > 0) {
+    return res.status(400).json({ error: `Cannot delete Category '${cat.name}' because it contains ${productsCount} active products in the catalog.` });
+  }
+
+  // Delete matching subcategories
+  db.prepare('DELETE FROM subcategories WHERE categoryId = ?').run(categoryId);
+  db.prepare('DELETE FROM categories WHERE id = ?').run(categoryId);
+  logEvent('info', 'Category Deleted', `Category '${cat.name}' (ID: ${categoryId}) deleted.`);
+  res.json({ success: true });
+});
+
+app.put('/api/subcategories/:id', (req, res) => {
+  const subcategoryId = parseInt(req.params.id);
+  const { name, categoryId } = req.body;
+  if (!name || !categoryId) return res.status(400).json({ error: 'Subcategory name and parent Category ID are required.' });
+
+  const sub = db.prepare('SELECT * FROM subcategories WHERE id = ?').get(subcategoryId);
+  if (!sub) return res.status(404).json({ error: 'Subcategory not found.' });
+
+  db.prepare('UPDATE subcategories SET name = ?, categoryId = ? WHERE id = ?').run(name, parseInt(categoryId), subcategoryId);
+  logEvent('info', 'Subcategory Updated', `Subcategory ID ${subcategoryId} updated to '${name}' under parent Category ${categoryId}.`);
+  res.json({ success: true, subcategory: { id: subcategoryId, name, categoryId: parseInt(categoryId) } });
+});
+
+app.delete('/api/subcategories/:id', (req, res) => {
+  const subcategoryId = parseInt(req.params.id);
+  const sub = db.prepare('SELECT * FROM subcategories WHERE id = ?').get(subcategoryId);
+  if (!sub) return res.status(404).json({ error: 'Subcategory not found.' });
+
+  // Prevent deletion if contains active products
+  const productsCount = db.prepare('SELECT COUNT(*) as count FROM products WHERE subcategoryId = ?').get(subcategoryId).count;
+  if (productsCount > 0) {
+    return res.status(400).json({ error: `Cannot delete Subcategory '${sub.name}' because it contains ${productsCount} active products in the catalog.` });
+  }
+
+  db.prepare('DELETE FROM subcategories WHERE id = ?').run(subcategoryId);
+  logEvent('info', 'Subcategory Deleted', `Subcategory '${sub.name}' (ID: ${subcategoryId}) deleted.`);
+  res.json({ success: true });
+});
+
 // ==========================================
 // PRODUCT CATALOG MANAGEMENT API
 // ==========================================

@@ -1217,15 +1217,17 @@ document.getElementById('addCategoryForm').addEventListener('submit', async (e) 
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Creation Failed', data.error, 'error');
     } else {
-      alert(`Category '${data.name}' created!`);
+      showAlert('Category Created', `Category '${data.name}' has been created successfully!`, 'success');
       document.getElementById('categoryName').value = '';
       await fetchCategories();
       populateAdminDropdowns();
+      renderAdminProducts();
     }
   } catch (err) {
     console.error(err);
+    showAlert('Error', 'Failed to create category.', 'error');
   }
 });
 
@@ -1242,15 +1244,17 @@ document.getElementById('addSubcategoryForm').addEventListener('submit', async (
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Creation Failed', data.error, 'error');
     } else {
-      alert(`Subcategory '${data.name}' created!`);
+      showAlert('Subcategory Created', `Subcategory '${data.name}' has been created successfully!`, 'success');
       document.getElementById('subcategoryName').value = '';
       await fetchSubcategories();
       populateAdminDropdowns();
+      renderAdminProducts();
     }
   } catch (err) {
     console.error(err);
+    showAlert('Error', 'Failed to create subcategory.', 'error');
   }
 });
 
@@ -1797,6 +1801,205 @@ function renderAdminProducts() {
     `;
     tableBody.appendChild(tr);
   });
+
+  renderAdminCategories();
+}
+
+// RENDER ADMIN CATEGORY & SUBCATEGORY TABLES
+function renderAdminCategories() {
+  const catTableBody = document.getElementById('adminCategoriesTableBody');
+  const subTableBody = document.getElementById('adminSubcategoriesTableBody');
+  
+  if (catTableBody) {
+    catTableBody.innerHTML = '';
+    state.categories.forEach(c => {
+      catTableBody.innerHTML += `
+        <tr>
+          <td>${c.id}</td>
+          <td><strong>${c.name}</strong></td>
+          <td>
+            <div class="admin-actions-cell">
+              <button class="btn-table-edit" style="padding: 4px 8px; font-size: 11px;" onclick="openEditCategoryModal(${c.id})">✏️ Edit</button>
+              <button class="btn-table-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCategory(${c.id})">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  if (subTableBody) {
+    subTableBody.innerHTML = '';
+    state.subcategories.forEach(s => {
+      const parent = state.categories.find(c => c.id === s.categoryId);
+      const parentName = parent ? parent.name : 'Unknown';
+      subTableBody.innerHTML += `
+        <tr>
+          <td>${s.id}</td>
+          <td><strong>${s.name}</strong></td>
+          <td><span class="admin-cat-badge">${parentName}</span></td>
+          <td>
+            <div class="admin-actions-cell">
+              <button class="btn-table-edit" style="padding: 4px 8px; font-size: 11px;" onclick="openEditSubcategoryModal(${s.id})">✏️ Edit</button>
+              <button class="btn-table-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubcategory(${s.id})">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  }
+}
+
+// EDIT CATEGORY MODAL CONTROLS
+function openEditCategoryModal(id) {
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+  document.getElementById('editCategoryId').value = cat.id;
+  document.getElementById('editCategoryName').value = cat.name;
+  document.getElementById('editCategoryModalOverlay').classList.add('active');
+}
+
+document.getElementById('closeEditCategoryBtn').addEventListener('click', () => {
+  document.getElementById('editCategoryModalOverlay').classList.remove('active');
+});
+
+document.getElementById('editCategoryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('editCategoryId').value;
+  const name = document.getElementById('editCategoryName').value;
+  try {
+    const res = await fetch(`/api/categories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Update Failed', data.error, 'error');
+    } else {
+      showAlert('Category Updated', 'Category name has been updated successfully.', 'success');
+      document.getElementById('editCategoryModalOverlay').classList.remove('active');
+      await fetchCategories();
+      populateAdminDropdowns();
+      renderAdminProducts();
+      renderProducts();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to update category.', 'error');
+  }
+});
+
+// DELETE CATEGORY CALL
+async function deleteCategory(id) {
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+  const confirmed = await showAlert(
+    'Confirm Delete',
+    `Are you sure you want to remove Category '${cat.name}'? This will also delete any empty subcategories under it.`,
+    'warning',
+    true
+  );
+  if (!confirmed) return;
+  try {
+    const res = await fetch(`/api/categories/${id}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Delete Failed', data.error, 'error');
+    } else {
+      showAlert('Category Deleted', `Category '${cat.name}' has been deleted successfully.`, 'success');
+      await fetchCategories();
+      await fetchSubcategories();
+      populateAdminDropdowns();
+      renderAdminProducts();
+      renderProducts();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to delete category.', 'error');
+  }
+}
+
+// EDIT SUBCATEGORY MODAL CONTROLS
+function openEditSubcategoryModal(id) {
+  const sub = state.subcategories.find(s => s.id === id);
+  if (!sub) return;
+  document.getElementById('editSubcategoryId').value = sub.id;
+  document.getElementById('editSubcategoryName').value = sub.name;
+
+  const parentSelect = document.getElementById('editSubcategoryParent');
+  parentSelect.innerHTML = '';
+  state.categories.forEach(c => {
+    const selected = c.id === sub.categoryId ? 'selected' : '';
+    parentSelect.innerHTML += `<option value="${c.id}" ${selected}>${c.name}</option>`;
+  });
+
+  document.getElementById('editSubcategoryModalOverlay').classList.add('active');
+}
+
+document.getElementById('closeEditSubcategoryBtn').addEventListener('click', () => {
+  document.getElementById('editSubcategoryModalOverlay').classList.remove('active');
+});
+
+document.getElementById('editSubcategoryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('editSubcategoryId').value;
+  const name = document.getElementById('editSubcategoryName').value;
+  const categoryId = document.getElementById('editSubcategoryParent').value;
+  try {
+    const res = await fetch(`/api/subcategories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, categoryId })
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Update Failed', data.error, 'error');
+    } else {
+      showAlert('Subcategory Updated', 'Subcategory details have been successfully updated.', 'success');
+      document.getElementById('editSubcategoryModalOverlay').classList.remove('active');
+      await fetchSubcategories();
+      populateAdminDropdowns();
+      renderAdminProducts();
+      renderProducts();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to update subcategory.', 'error');
+  }
+});
+
+// DELETE SUBCATEGORY CALL
+async function deleteSubcategory(id) {
+  const sub = state.subcategories.find(s => s.id === id);
+  if (!sub) return;
+  const confirmed = await showAlert(
+    'Confirm Delete',
+    `Are you sure you want to remove Subcategory '${sub.name}'?`,
+    'warning',
+    true
+  );
+  if (!confirmed) return;
+  try {
+    const res = await fetch(`/api/subcategories/${id}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Delete Failed', data.error, 'error');
+    } else {
+      showAlert('Subcategory Deleted', `Subcategory '${sub.name}' has been deleted successfully.`, 'success');
+      await fetchSubcategories();
+      populateAdminDropdowns();
+      renderAdminProducts();
+      renderProducts();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to delete subcategory.', 'error');
+  }
 }
 
 // DELETE PRODUCT CALL

@@ -331,6 +331,52 @@
               <!-- Dynamically populated -->
             </tbody>
           </table>
+      </div>
+
+      <!-- Categories & Subcategories Management Card -->
+      <div class="dashboard-card full-width mt-large">
+        <h2>Manage Categories & Subcategories</h2>
+        <p>Edit names or remove categories and subcategories from the system</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; margin-top: 16px;">
+          <!-- Categories Table -->
+          <div>
+            <h3>Categories List</h3>
+            <div class="table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Category Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminCategoriesTableBody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Subcategories Table -->
+          <div>
+            <h3>Subcategories List</h3>
+            <div class="table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Subcategory Name</th>
+                    <th>Parent Category</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminSubcategoriesTableBody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -688,6 +734,62 @@
             </div>
           </div>
 
+          <button type="submit" class="btn-primary w-full mt-medium" style="background: #7c3aed; color: white; border: none; height: 46px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       EDIT CATEGORY MODAL - POPUP OVERLAY
+       ============================================== -->
+  <div class="modal-overlay" id="editCategoryModalOverlay">
+    <div class="checkout-modal dashboard-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-display); font-weight: 700;">Edit Category</h2>
+        <button class="close-modal" id="closeEditCategoryBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="editCategoryForm">
+          <input type="hidden" id="editCategoryId">
+          <div class="form-group">
+            <label for="editCategoryName">Category Name</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📁</span>
+              <input type="text" id="editCategoryName" required style="padding-left: 42px !important;">
+            </div>
+          </div>
+          <button type="submit" class="btn-primary w-full mt-medium" style="background: #7c3aed; color: white; border: none; height: 46px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       EDIT SUBCATEGORY MODAL - POPUP OVERLAY
+       ============================================== -->
+  <div class="modal-overlay" id="editSubcategoryModalOverlay">
+    <div class="checkout-modal dashboard-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-display); font-weight: 700;">Edit Subcategory</h2>
+        <button class="close-modal" id="closeEditSubcategoryBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="editSubcategoryForm">
+          <input type="hidden" id="editSubcategoryId">
+          <div class="form-group">
+            <label for="editSubcategoryParent">Parent Category</label>
+            <select id="editSubcategoryParent" required>
+              <!-- Populated -->
+            </select>
+          </div>
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="editSubcategoryName">Subcategory Name</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📁</span>
+              <input type="text" id="editSubcategoryName" required style="padding-left: 42px !important;">
+            </div>
+          </div>
           <button type="submit" class="btn-primary w-full mt-medium" style="background: #7c3aed; color: white; border: none; height: 46px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Save Changes</button>
         </form>
       </div>
