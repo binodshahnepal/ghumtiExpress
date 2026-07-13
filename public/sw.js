@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ghumti-express-v1';
+const CACHE_NAME = 'ghumti-express-v5';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/offline.html',
-  '/styles.css',
-  '/app.js',
+  '/styles.css?v=5',
+  '/app.js?v=5',
   '/manifest.webmanifest',
   '/logo.png',
   '/icons/icon-192.png',
@@ -47,6 +47,21 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => caches.match('/offline.html'))
+    );
+    return;
+  }
+
+  if (['/app.js', '/styles.css', '/manifest.webmanifest'].includes(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }

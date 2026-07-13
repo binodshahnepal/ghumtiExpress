@@ -456,8 +456,11 @@ app.get('/api/categories', (req, res) => {
 });
 
 app.post('/api/categories', (req, res) => {
-  const { name } = req.body;
+  const name = String(req.body.name || '').trim();
   if (!name) return res.status(400).json({ error: 'Category name is required.' });
+
+  const duplicate = db.prepare('SELECT id FROM categories WHERE lower(name) = lower(?)').get(name);
+  if (duplicate) return res.status(409).json({ error: 'A category with this name already exists.' });
 
   try {
     const info = db.prepare('INSERT INTO categories (name) VALUES (?)').run(name);
@@ -474,21 +477,31 @@ app.get('/api/subcategories', (req, res) => {
 });
 
 app.post('/api/subcategories', (req, res) => {
-  const { name, categoryId } = req.body;
+  const name = String(req.body.name || '').trim();
+  const categoryId = parseInt(req.body.categoryId);
   if (!name || !categoryId) return res.status(400).json({ error: 'Subcategory name and parent Category ID are required.' });
 
-  const info = db.prepare('INSERT INTO subcategories (name, categoryId) VALUES (?, ?)').run(name, parseInt(categoryId));
+  const parent = db.prepare('SELECT id FROM categories WHERE id = ?').get(categoryId);
+  if (!parent) return res.status(400).json({ error: 'The selected parent category does not exist.' });
+
+  const duplicate = db.prepare('SELECT id FROM subcategories WHERE categoryId = ? AND lower(name) = lower(?)').get(categoryId, name);
+  if (duplicate) return res.status(409).json({ error: 'A subcategory with this name already exists under the selected category.' });
+
+  const info = db.prepare('INSERT INTO subcategories (name, categoryId) VALUES (?, ?)').run(name, categoryId);
   logEvent('info', 'Subcategory Created', `New subcategory '${name}' under Category ${categoryId}.`);
-  res.json({ id: info.lastInsertRowid, name, categoryId: parseInt(categoryId) });
+  res.json({ id: info.lastInsertRowid, name, categoryId });
 });
 
 app.put('/api/categories/:id', (req, res) => {
   const categoryId = parseInt(req.params.id);
-  const { name } = req.body;
+  const name = String(req.body.name || '').trim();
   if (!name) return res.status(400).json({ error: 'Category name is required.' });
 
   const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(categoryId);
   if (!cat) return res.status(404).json({ error: 'Category not found.' });
+
+  const duplicate = db.prepare('SELECT id FROM categories WHERE lower(name) = lower(?) AND id != ?').get(name, categoryId);
+  if (duplicate) return res.status(409).json({ error: 'A category with this name already exists.' });
 
   try {
     db.prepare('UPDATE categories SET name = ? WHERE id = ?').run(name, categoryId);
@@ -519,15 +532,30 @@ app.delete('/api/categories/:id', (req, res) => {
 
 app.put('/api/subcategories/:id', (req, res) => {
   const subcategoryId = parseInt(req.params.id);
-  const { name, categoryId } = req.body;
+  const name = String(req.body.name || '').trim();
+  const categoryId = parseInt(req.body.categoryId);
   if (!name || !categoryId) return res.status(400).json({ error: 'Subcategory name and parent Category ID are required.' });
 
   const sub = db.prepare('SELECT * FROM subcategories WHERE id = ?').get(subcategoryId);
   if (!sub) return res.status(404).json({ error: 'Subcategory not found.' });
 
-  db.prepare('UPDATE subcategories SET name = ?, categoryId = ? WHERE id = ?').run(name, parseInt(categoryId), subcategoryId);
+  const parent = db.prepare('SELECT id FROM categories WHERE id = ?').get(categoryId);
+  if (!parent) return res.status(400).json({ error: 'The selected parent category does not exist.' });
+
+  const duplicate = db.prepare('SELECT id FROM subcategories WHERE categoryId = ? AND lower(name) = lower(?) AND id != ?').get(categoryId, name, subcategoryId);
+  if (duplicate) return res.status(409).json({ error: 'A subcategory with this name already exists under the selected category.' });
+
+  db.exec('BEGIN');
+  try {
+    db.prepare('UPDATE subcategories SET name = ?, categoryId = ? WHERE id = ?').run(name, categoryId, subcategoryId);
+    db.prepare('UPDATE products SET categoryId = ? WHERE subcategoryId = ?').run(categoryId, subcategoryId);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
   logEvent('info', 'Subcategory Updated', `Subcategory ID ${subcategoryId} updated to '${name}' under parent Category ${categoryId}.`);
-  res.json({ success: true, subcategory: { id: subcategoryId, name, categoryId: parseInt(categoryId) } });
+  res.json({ success: true, subcategory: { id: subcategoryId, name, categoryId } });
 });
 
 app.delete('/api/subcategories/:id', (req, res) => {

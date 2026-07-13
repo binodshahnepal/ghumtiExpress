@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=5">
 </head>
 <body>
 
@@ -313,6 +313,12 @@
       <div class="dashboard-card full-width mt-large">
         <h2>Manage Product Catalog</h2>
         <p>Edit pricing, update stock levels, or delete items from the catalog</p>
+        <div class="admin-table-toolbar">
+          <label class="admin-table-search" for="adminProductSearch">
+            <span class="admin-search-icon" aria-hidden="true"></span>
+            <input type="search" id="adminProductSearch" placeholder="Search products or categories" autocomplete="off" aria-label="Search products">
+          </label>
+        </div>
         
         <div class="table-container">
           <table class="admin-table">
@@ -331,6 +337,8 @@
               <!-- Dynamically populated -->
             </tbody>
           </table>
+        </div>
+        <div class="admin-pagination" id="adminProductsPagination" aria-label="Product table pagination"></div>
       </div>
 
       <!-- Categories & Subcategories Management Card -->
@@ -338,10 +346,16 @@
         <h2>Manage Categories & Subcategories</h2>
         <p>Edit names or remove categories and subcategories from the system</p>
         
-        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; margin-top: 16px;">
+        <div class="category-management-grid">
           <!-- Categories Table -->
           <div>
-            <h3>Categories List</h3>
+            <div class="admin-list-header">
+              <h3>Categories List</h3>
+              <label class="admin-table-search compact" for="adminCategorySearch">
+                <span class="admin-search-icon" aria-hidden="true"></span>
+                <input type="search" id="adminCategorySearch" placeholder="Search categories" autocomplete="off" aria-label="Search categories">
+              </label>
+            </div>
             <div class="table-container">
               <table class="admin-table">
                 <thead>
@@ -356,11 +370,18 @@
                 </tbody>
               </table>
             </div>
+            <div class="admin-pagination" id="adminCategoriesPagination" aria-label="Category table pagination"></div>
           </div>
           
           <!-- Subcategories Table -->
           <div>
-            <h3>Subcategories List</h3>
+            <div class="admin-list-header">
+              <h3>Subcategories List</h3>
+              <label class="admin-table-search compact" for="adminSubcategorySearch">
+                <span class="admin-search-icon" aria-hidden="true"></span>
+                <input type="search" id="adminSubcategorySearch" placeholder="Search subcategories" autocomplete="off" aria-label="Search subcategories">
+              </label>
+            </div>
             <div class="table-container">
               <table class="admin-table">
                 <thead>
@@ -376,6 +397,7 @@
                 </tbody>
               </table>
             </div>
+            <div class="admin-pagination" id="adminSubcategoriesPagination" aria-label="Subcategory table pagination"></div>
           </div>
         </div>
       </div>
@@ -1195,6 +1217,6 @@
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=5"></script>
 </body>
 </html>

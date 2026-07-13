@@ -16,8 +16,20 @@ let state = {
   selectedReviewStars: 5,
   activeProductForDetail: null,
   carouselSlideIndex: 0,
-  carouselTimer: null
+  carouselTimer: null,
+  adminPagination: {
+    products: 1,
+    categories: 1,
+    subcategories: 1
+  },
+  adminSearch: {
+    products: '',
+    categories: '',
+    subcategories: ''
+  }
 };
+
+const ADMIN_PAGE_SIZE = 10;
 
 // ==========================================================================
 // ON BOOTSTRAP INITIALIZATION
@@ -28,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   startCarouselAutoPlay();
   startFlashSaleCountdown();
   setupPwa();
+  setupAdminTableSearch();
 });
 
 let deferredInstallPrompt = null;
@@ -36,9 +49,11 @@ function setupPwa() {
   const installButton = document.getElementById('installAppBtn');
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(error => {
-      console.warn('Service worker registration failed:', error);
-    });
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then(registration => registration.update())
+      .catch(error => {
+        console.warn('Service worker registration failed:', error);
+      });
   }
 
   if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -397,6 +412,7 @@ function switchView(role) {
     document.getElementById('adminViewSection').style.display = 'block';
     populateAdminDropdowns();
     renderAdminProducts();
+    renderAdminCategories();
   } else if (role === 'superadmin') {
     document.getElementById('superadminViewSection').style.display = 'block';
     loadSuperAdminDashboard();
@@ -1770,13 +1786,118 @@ function setupEventListeners() {
 // ADMIN CATALOG MANAGEMENT CONTROLLERS
 // ==========================================================================
 
+function setupAdminTableSearch() {
+  const searchFields = {
+    products: document.getElementById('adminProductSearch'),
+    categories: document.getElementById('adminCategorySearch'),
+    subcategories: document.getElementById('adminSubcategorySearch')
+  };
+
+  Object.entries(searchFields).forEach(([type, input]) => {
+    if (!input) return;
+    input.addEventListener('input', event => {
+      state.adminSearch[type] = event.target.value.trim().toLowerCase();
+      state.adminPagination[type] = 1;
+      if (type === 'products') renderAdminProducts();
+      else renderAdminCategories();
+    });
+  });
+}
+
+function getFilteredAdminItems(type) {
+  const query = state.adminSearch[type];
+  if (type === 'products') {
+    if (!query) return state.products;
+    return state.products.filter(product => {
+      const category = state.categories.find(item => item.id === product.categoryId)?.name || '';
+      const subcategory = state.subcategories.find(item => item.id === product.subcategoryId)?.name || '';
+      return `${product.name} ${category} ${subcategory}`.toLowerCase().includes(query);
+    });
+  }
+
+  if (type === 'categories') {
+    return query ? state.categories.filter(category => category.name.toLowerCase().includes(query)) : state.categories;
+  }
+
+  if (!query) return state.subcategories;
+  return state.subcategories.filter(subcategory => {
+    const parent = state.categories.find(item => item.id === subcategory.categoryId)?.name || '';
+    return `${subcategory.name} ${parent}`.toLowerCase().includes(query);
+  });
+}
+
+function getAdminPage(items, type) {
+  const totalPages = Math.max(1, Math.ceil(items.length / ADMIN_PAGE_SIZE));
+  const requestedPage = Number(state.adminPagination[type]) || 1;
+  const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
+  state.adminPagination[type] = currentPage;
+  const startIndex = (currentPage - 1) * ADMIN_PAGE_SIZE;
+
+  return {
+    items: items.slice(startIndex, startIndex + ADMIN_PAGE_SIZE),
+    currentPage,
+    totalPages,
+    startIndex
+  };
+}
+
+function renderAdminPagination(containerId, type, totalItems) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / ADMIN_PAGE_SIZE));
+  const currentPage = Math.min(state.adminPagination[type], totalPages);
+  const firstItem = totalItems === 0 ? 0 : ((currentPage - 1) * ADMIN_PAGE_SIZE) + 1;
+  const lastItem = Math.min(currentPage * ADMIN_PAGE_SIZE, totalItems);
+  const pageButtons = [];
+  let previousVisiblePage = 0;
+
+  for (let page = 1; page <= totalPages; page++) {
+    const isVisible = page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+    if (!isVisible) continue;
+    if (previousVisiblePage && page - previousVisiblePage > 1) {
+      pageButtons.push('<span class="pagination-ellipsis" aria-hidden="true">…</span>');
+    }
+    pageButtons.push(`<button class="pagination-page-btn ${page === currentPage ? 'active' : ''}" onclick="changeAdminPage('${type}', ${page})" ${page === currentPage ? 'aria-current="page"' : ''}>${page}</button>`);
+    previousVisiblePage = page;
+  }
+
+  container.innerHTML = `
+    <span class="pagination-summary">Showing ${firstItem}–${lastItem} of ${totalItems}${state.adminSearch[type] ? ' matches' : ''}</span>
+    <div class="pagination-controls">
+      <button class="pagination-nav-btn" onclick="changeAdminPage('${type}', ${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+      ${pageButtons.join('')}
+      <button class="pagination-nav-btn" onclick="changeAdminPage('${type}', ${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+    </div>
+  `;
+}
+
+function changeAdminPage(type, page) {
+  const source = getFilteredAdminItems(type);
+  const totalPages = Math.max(1, Math.ceil(source.length / ADMIN_PAGE_SIZE));
+  state.adminPagination[type] = Math.min(Math.max(1, page), totalPages);
+
+  if (type === 'products') renderAdminProducts();
+  else renderAdminCategories();
+}
+
 // RENDER ADMIN PRODUCT CATALOG TABLE
 function renderAdminProducts() {
   const tableBody = document.getElementById('adminProductsTableBody');
-  if (!tableBody) return;
+  if (!tableBody) {
+    renderAdminCategories();
+    return;
+  }
   tableBody.innerHTML = '';
 
-  state.products.forEach(prod => {
+  const filteredProducts = getFilteredAdminItems('products');
+  const productPage = getAdminPage(filteredProducts, 'products');
+
+  if (filteredProducts.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="admin-empty-row">${state.adminSearch.products ? 'No products match your search.' : 'No products have been created yet.'}</td></tr>`;
+  }
+
+  productPage.items.forEach(prod => {
     const category = state.categories.find(c => c.id === prod.categoryId);
     const categoryName = category ? category.name : 'Unknown';
     
@@ -1802,6 +1923,8 @@ function renderAdminProducts() {
     tableBody.appendChild(tr);
   });
 
+  renderAdminPagination('adminProductsPagination', 'products', filteredProducts.length);
+
   renderAdminCategories();
 }
 
@@ -1812,25 +1935,36 @@ function renderAdminCategories() {
   
   if (catTableBody) {
     catTableBody.innerHTML = '';
-    state.categories.forEach(c => {
+    const filteredCategories = getFilteredAdminItems('categories');
+    const categoryPage = getAdminPage(filteredCategories, 'categories');
+    if (filteredCategories.length === 0) {
+      catTableBody.innerHTML = `<tr><td colspan="3" class="admin-empty-row">${state.adminSearch.categories ? 'No categories match your search.' : 'No categories have been created yet.'}</td></tr>`;
+    }
+    categoryPage.items.forEach(c => {
       catTableBody.innerHTML += `
         <tr>
           <td>${c.id}</td>
           <td><strong>${c.name}</strong></td>
           <td>
             <div class="admin-actions-cell">
-              <button class="btn-table-edit" style="padding: 4px 8px; font-size: 11px;" onclick="openEditCategoryModal(${c.id})">✏️ Edit</button>
-              <button class="btn-table-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCategory(${c.id})">🗑️ Delete</button>
+              <button class="btn-table-edit btn-table-compact" onclick="openEditCategoryModal(${c.id})">✏️ Edit</button>
+              <button class="btn-table-delete btn-table-compact" onclick="deleteCategory(${c.id})">🗑️ Delete</button>
             </div>
           </td>
         </tr>
       `;
     });
+    renderAdminPagination('adminCategoriesPagination', 'categories', filteredCategories.length);
   }
 
   if (subTableBody) {
     subTableBody.innerHTML = '';
-    state.subcategories.forEach(s => {
+    const filteredSubcategories = getFilteredAdminItems('subcategories');
+    const subcategoryPage = getAdminPage(filteredSubcategories, 'subcategories');
+    if (filteredSubcategories.length === 0) {
+      subTableBody.innerHTML = `<tr><td colspan="4" class="admin-empty-row">${state.adminSearch.subcategories ? 'No subcategories match your search.' : 'No subcategories have been created yet.'}</td></tr>`;
+    }
+    subcategoryPage.items.forEach(s => {
       const parent = state.categories.find(c => c.id === s.categoryId);
       const parentName = parent ? parent.name : 'Unknown';
       subTableBody.innerHTML += `
@@ -1840,13 +1974,14 @@ function renderAdminCategories() {
           <td><span class="admin-cat-badge">${parentName}</span></td>
           <td>
             <div class="admin-actions-cell">
-              <button class="btn-table-edit" style="padding: 4px 8px; font-size: 11px;" onclick="openEditSubcategoryModal(${s.id})">✏️ Edit</button>
-              <button class="btn-table-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubcategory(${s.id})">🗑️ Delete</button>
+              <button class="btn-table-edit btn-table-compact" onclick="openEditSubcategoryModal(${s.id})">✏️ Edit</button>
+              <button class="btn-table-delete btn-table-compact" onclick="deleteSubcategory(${s.id})">🗑️ Delete</button>
             </div>
           </td>
         </tr>
       `;
     });
+    renderAdminPagination('adminSubcategoriesPagination', 'subcategories', filteredSubcategories.length);
   }
 }
 
