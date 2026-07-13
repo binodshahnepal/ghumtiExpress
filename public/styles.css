@@ -2161,7 +2161,7 @@ body { padding-bottom: 0; }
 #customerViewSection .compact-product-card .product-info-block { padding: 15px; }
 .product-brand { margin-bottom: 5px; color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .wishlist-btn { position: absolute; top: 10px; right: 10px; z-index: 12; width: 34px; height: 34px; border: 1px solid #e2e8f0; border-radius: 50%; background: rgba(255,255,255,.92); color: #475569; font-size: 20px; cursor: pointer; }
-.wishlist-btn:hover { color: #ef4444; border-color: #fecaca; }
+.wishlist-btn:hover, .wishlist-btn.active { color: #ef4444; border-color: #fecaca; background: #fff1f2; }
 .deal-corner-badge { position: absolute; top: 12px; left: 12px; z-index: 11; padding: 4px 8px; border-radius: 6px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; }
 #customerViewSection .restricted-pill + .deal-corner-badge { top: 44px; }
 #customerViewSection .save-tag { align-self: flex-start; margin-top: -10px; margin-bottom: 10px; font-size: 10px; }

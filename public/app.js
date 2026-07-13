@@ -8,6 +8,7 @@ let state = {
   categories: [],
   subcategories: [],
   cart: [],
+  wishlist: JSON.parse(localStorage.getItem('ghumti_wishlist')) || [],
   orders: [],
   logs: [],
   activeCategoryFilter: 'all',
@@ -469,7 +470,7 @@ function buildProductCardMarkup(prod, compact = false) {
     <article class="product-card ${compact ? 'compact-product-card' : ''}">
       ${ageRestrictedBadge}
       ${isDiscounted ? `<span class="deal-corner-badge">-${discountPct}%</span>` : ''}
-      <button class="wishlist-btn" type="button" aria-label="Save ${prod.name} to wishlist">♡</button>
+      <button class="wishlist-btn ${state.wishlist.includes(prod.id) ? 'active' : ''}" type="button" onclick="toggleWishlist(event, ${prod.id})" aria-label="${state.wishlist.includes(prod.id) ? 'Remove' : 'Save'} ${prod.name} ${state.wishlist.includes(prod.id) ? 'from' : 'to'} wishlist">${state.wishlist.includes(prod.id) ? '♥' : '♡'}</button>
       <div class="product-image-container" onclick="openProductDetail(${prod.id})" role="button" tabindex="0">
         ${imageHtml}
       </div>
@@ -530,6 +531,15 @@ function renderLandingCollections() {
   const essentials = state.products.filter(product => product.categoryId === 2);
   renderProductRail('flashSaleRail', discounted);
   renderProductRail('essentialsRail', essentials);
+}
+
+function toggleWishlist(event, productId) {
+  event.stopPropagation();
+  const index = state.wishlist.indexOf(productId);
+  if (index >= 0) state.wishlist.splice(index, 1);
+  else state.wishlist.push(productId);
+  localStorage.setItem('ghumti_wishlist', JSON.stringify(state.wishlist));
+  renderProducts();
 }
 
 function startFlashSaleCountdown() {
