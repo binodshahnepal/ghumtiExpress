@@ -1962,6 +1962,35 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 3px rgba(245, 114, 36, 0.12) !important;
 }
 
+/* Custom select styling inside light modals */
+.checkout-modal select, .onboarding-modal select {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #0f172a;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  height: 46px;
+}
+
+.checkout-modal select:focus, .onboarding-modal select:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
 .helper-text {
   font-size: 12px;
   color: #64748b;
@@ -2750,6 +2779,13 @@ body { padding-bottom: 0; }
   transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
 }
 
 .view-panel:not(#customerViewSection) .dashboard-card form input[type="text"]:focus,

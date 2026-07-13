@@ -1845,6 +1845,21 @@ function openEditProductModal(productId) {
   document.getElementById('editProductStock').value = prod.stock;
   document.getElementById('editProductAgeRestricted').checked = prod.isAgeRestricted;
 
+  // Populate current image preview in edit modal
+  const previewImg = document.getElementById('editProductImagePreview');
+  const labelEl = document.getElementById('editProductImageLabel');
+  if (prod.imageUrl && prod.imageUrl !== '') {
+    previewImg.src = prod.imageUrl;
+  } else {
+    let icon = '📦';
+    if (prod.categoryId === 1) icon = '🥃';
+    else if (prod.categoryId === 2) icon = '🍎';
+    else if (prod.categoryId === 3) icon = '☕';
+    previewImg.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="60%" font-size="28" text-anchor="middle">${icon}</text></svg>`;
+  }
+  labelEl.textContent = 'Upload New Photo...';
+  document.getElementById('editProductImage').value = '';
+
   // Populate category list in edit dropdown
   const editCatSelect = document.getElementById('editProductCategory');
   const editSubSelect = document.getElementById('editProductSubcategory');
@@ -1906,6 +1921,23 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
   } catch (err) {
     console.error(err);
     showAlert('Update Error', 'Failed to update product details on server.', 'error');
+  }
+});
+
+// Edit Product Image selection change listener for dynamic preview
+document.getElementById('editProductImage').addEventListener('change', (e) => {
+  const label = document.getElementById('editProductImageLabel');
+  if (e.target.files.length > 0) {
+    label.textContent = e.target.files[0].name;
+    
+    // Update image preview dynamically
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      document.getElementById('editProductImagePreview').src = event.target.result;
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  } else {
+    label.textContent = 'Upload New Photo...';
   }
 });
 
