@@ -3,20 +3,24 @@ const path = require('path');
 
 const imagesToProcess = [
   {
-    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\dept_liquor_white_1783951700754.png",
-    output: "E:\\Ghumti Express\\public\\dept_liquor.png"
+    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\prod_whiskey_white_1783951946982.png",
+    output: "E:\\Ghumti Express\\public\\placeholder_whiskey.png"
   },
   {
-    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\dept_grocery_white_1783951715338.png",
-    output: "E:\\Ghumti Express\\public\\dept_grocery.png"
+    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\prod_rum_white_1783951960071.png",
+    output: "E:\\Ghumti Express\\public\\placeholder_rum.png"
   },
   {
-    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\dept_coffee_white_1783951728292.png",
-    output: "E:\\Ghumti Express\\public\\dept_coffee.png"
+    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\prod_coffee_white_1783951976002.png",
+    output: "E:\\Ghumti Express\\public\\placeholder_coffee.png"
   },
   {
-    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\dept_deal_white_1783951756400.png",
-    output: "E:\\Ghumti Express\\public\\dept_deal.png"
+    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\prod_milk_white_1783951988916.png",
+    output: "E:\\Ghumti Express\\public\\placeholder_milk.png"
+  },
+  {
+    input: "C:\\Users\\user\\.gemini\\antigravity\\brain\\882b5835-b94f-4053-aaee-4c482ccf2b30\\prod_noodles_white_1783952002579.png",
+    output: "E:\\Ghumti Express\\public\\placeholder_noodles.png"
   }
 ];
 
