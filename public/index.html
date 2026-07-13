@@ -15,6 +15,17 @@
   <!-- E-COMMERCE MAIN HEADER (Daraz/Amazon Style) -->
   <header class="ecommerce-header">
 
+    <div class="utility-bar">
+      <div class="nav-container utility-content">
+        <p>Express delivery across Kathmandu Valley</p>
+        <div class="utility-links" aria-label="Customer services">
+          <span>Help & Support</span>
+          <span>Track Order</span>
+          <span>EN / NE</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Navigation Bar -->
     <div class="main-nav-bar">
       <div class="nav-container">
@@ -27,10 +38,16 @@
           </div>
         </div>
 
+        <button class="delivery-location" type="button" aria-label="Choose delivery location">
+          <span class="delivery-location-icon">&#9679;</span>
+          <span><small>Delivering to</small><strong>Kathmandu</strong></span>
+        </button>
+
         <!-- E-commerce Search Bar -->
         <div class="search-bar-container">
-          <span class="search-icon-inside">🔍</span>
-          <input type="text" id="searchInput" placeholder="Search from thousands of items (whiskey, cold drinks, snacks, fresh coffee...)">
+          <span class="search-category-label">All</span>
+          <input type="search" id="searchInput" placeholder="Search groceries, coffee, spirits and more" aria-label="Search products">
+          <button type="button" class="search-submit-btn" aria-label="Search">Search</button>
         </div>
 
         <!-- Profile & Cart Actions -->
@@ -44,7 +61,7 @@
 
           <button class="cart-toggle-btn" id="cartToggleBtn">
             <span class="cart-icon">🛒</span>
-            <span class="cart-label">Cart</span>
+            <span class="cart-label">Cart <small id="headerCartTotal">NPR 0</small></span>
             <span id="cartCountBadge" class="count-badge">0</span>
           </button>
         </div>
@@ -61,6 +78,15 @@
           <a href="#" class="nav-item" id="menuCoffee" onclick="filterCategory(3)">Himalayan Specialty Coffee</a>
           <a href="#" class="nav-item flash-sales-link" id="menuFlash" onclick="filterFlashSales()">⚡ Flash Sales & Discounts</a>
         </nav>
+      </div>
+    </div>
+
+    <div class="trust-strip" aria-label="Shopping benefits">
+      <div class="trust-strip-inner">
+        <div class="trust-item"><strong>30&ndash;60 min</strong><span>Express delivery</span></div>
+        <div class="trust-item"><strong>100% genuine</strong><span>Quality-checked goods</span></div>
+        <div class="trust-item"><strong>Secure payments</strong><span>eSewa, Khalti & connectIPS</span></div>
+        <div class="trust-item"><strong>Responsible handoff</strong><span>Verified 18+ delivery</span></div>
       </div>
     </div>
   </header>
@@ -131,43 +157,35 @@
         </div>
       </div>
 
-      <!-- CATEGORY SHOWCASE OVERLAY GRID -->
-      <div class="departments-quick-grid">
-        <!-- Card 1: Spirits -->
-        <div class="dept-card" onclick="filterCategory(1)">
-          <h3>Spirits Cellar</h3>
-          <div class="dept-image-preview liquor-gradient">
-            <img src="/dept_liquor.png" class="dept-img" alt="Spirits Cellar">
-          </div>
-          <span class="dept-link">Shop Premium Whiskeys & Rum →</span>
+      <div class="storefront-body-container category-discovery-block">
+        <div class="compact-section-heading">
+          <div><span class="eyebrow">SHOP YOUR WAY</span><h2>Popular categories</h2></div>
+          <button class="text-link-btn" onclick="filterCategory('all')">Browse all products &rarr;</button>
         </div>
-        
-        <!-- Card 2: Groceries -->
-        <div class="dept-card" onclick="filterCategory(2)">
-          <h3>Pantry Staples</h3>
-          <div class="dept-image-preview grocery-gradient">
-            <img src="/dept_grocery.png" class="dept-img" alt="Pantry Staples">
+        <div class="category-shortcut-rail" id="categoryShortcutRail" aria-label="Product categories"></div>
+      </div>
+
+      <div class="home-merchandising">
+        <section class="storefront-body-container flash-sale-section" aria-labelledby="flashSaleTitle">
+          <div class="compact-section-heading sale-heading">
+            <div><span class="eyebrow sale-eyebrow">LIMITED-TIME SAVINGS</span><h2 id="flashSaleTitle">Flash sale</h2></div>
+            <div class="sale-heading-actions"><span class="sale-timer" id="saleTimer">Ends in 06:00:00</span><button class="text-link-btn" onclick="filterFlashSales()">Shop all deals &rarr;</button></div>
           </div>
-          <span class="dept-link">Order Dairy & Instant Bites →</span>
-        </div>
-        
-        <!-- Card 3: Coffee -->
-        <div class="dept-card" onclick="filterCategory(3)">
-          <h3>Barista Hub</h3>
-          <div class="dept-image-preview coffee-gradient">
-            <img src="/dept_coffee.png" class="dept-img" alt="Barista Hub">
+          <div class="product-rail" id="flashSaleRail"></div>
+        </section>
+
+        <section class="storefront-body-container curated-section" aria-labelledby="essentialsTitle">
+          <div class="compact-section-heading">
+            <div><span class="eyebrow">EVERYDAY VALUE</span><h2 id="essentialsTitle">Pantry essentials</h2></div>
+            <button class="text-link-btn" onclick="filterCategory(2)">See groceries &rarr;</button>
           </div>
-          <span class="dept-link">Himalayan Roast Coffee Beans →</span>
-        </div>
-        
-        <!-- Card 4: Flash Deals -->
-        <div class="dept-card" onclick="filterFlashSales()">
-          <h3>Hot Deals</h3>
-          <div class="dept-image-preview discount-gradient">
-            <img src="/dept_deal.png" class="dept-img" alt="Hot Deals">
-          </div>
-          <span class="dept-link font-red">Save Up to 25% Off →</span>
-        </div>
+          <div class="product-rail" id="essentialsRail"></div>
+        </section>
+
+        <section class="storefront-body-container story-banner">
+          <div><span class="eyebrow light-eyebrow">ROASTED IN NEPAL</span><h2>Himalayan coffee, from roaster to doorstep.</h2><p>Discover aromatic local beans and fresh brews delivered while they are at their best.</p><button class="btn-light" onclick="filterCategory(3)">Explore coffee</button></div>
+          <img src="/dept_coffee.png" alt="Locally roasted Himalayan coffee">
+        </section>
       </div>
 
       <!-- PRODUCTS SECTION GRID (LIGHT THEME) -->
@@ -275,6 +293,31 @@
 
             <button type="submit" class="btn-primary w-full">Upload New Product</button>
           </form>
+        </div>
+      </div>
+
+      <!-- Catalog Management Table -->
+      <div class="dashboard-card full-width mt-large">
+        <h2>Manage Product Catalog</h2>
+        <p>Edit pricing, update stock levels, or delete items from the catalog</p>
+        
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price (NPR)</th>
+                <th>Stock</th>
+                <th>Age Lock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -503,6 +546,78 @@
     </div>
   </div>
 
+  <!-- ==============================================
+       EDIT PRODUCT MODAL (ADMIN ONLY) - POPUP OVERLAY
+       ============================================== -->
+  <div class="modal-overlay" id="editProductModalOverlay">
+    <div class="checkout-modal dashboard-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-display); font-weight: 700;">Edit Product Details</h2>
+        <button class="close-modal" id="closeEditProductBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="editProductForm" enctype="multipart/form-data">
+          <input type="hidden" id="editProductId">
+          
+          <div class="form-group">
+            <label for="editProductName">Product Name</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📦</span>
+              <input type="text" id="editProductName" required>
+            </div>
+          </div>
+          
+          <div class="grid-2-cols">
+            <div class="form-group">
+              <label for="editProductCategory">Category</label>
+              <select id="editProductCategory" required>
+                <!-- Populated -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editProductSubcategory">Subcategory</label>
+              <select id="editProductSubcategory" required>
+                <!-- Populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2-cols">
+            <div class="form-group">
+              <label for="editProductPrice">Price in NPR</label>
+              <div class="input-wrapper">
+                <span class="input-icon">💸</span>
+                <input type="number" id="editProductPrice" min="0" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editProductStock">Current Stock</label>
+              <div class="input-wrapper">
+                <span class="input-icon">📈</span>
+                <input type="number" id="editProductStock" min="0" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group check-inline" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
+            <input type="checkbox" id="editProductAgeRestricted">
+            <label for="editProductAgeRestricted" style="margin-bottom: 0;">⚠️ Age-restricted alcohol item (Requires 18+)</label>
+          </div>
+
+          <div class="form-group">
+            <label for="editProductImage">Replace Product Image (Optional)</label>
+            <div class="file-drop-area">
+              <input type="file" id="editProductImage" name="image" accept="image/*">
+              <span class="file-message">Click to replace photo (leave blank to keep current)</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary w-full mt-medium">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- E-COMMERCE FOOTER (Amazon/Daraz Multi-column Style) -->
   <footer class="ecommerce-footer">
     <div class="footer-container">
@@ -522,12 +637,12 @@
           </ul>
         </div>
         <div class="footer-col">
-          <h3>Integrator Sandboxes</h3>
+          <h3>Customer Care</h3>
           <ul>
-            <li><a href="#esewa" onclick="state.currentRole='operations'; switchView('operations');">eSewa Callback Sim</a></li>
-            <li><a href="#khalti" onclick="state.currentRole='operations'; switchView('operations');">Khalti Verification Sim</a></li>
-            <li><a href="#superadmin" onclick="state.currentRole='superadmin'; switchView('superadmin');">Super Admin Terminal</a></li>
-            <li><a href="#admin" onclick="state.currentRole='admin'; switchView('admin');">Upload Product Catalog</a></li>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Delivery Information</a></li>
+            <li><a href="#">Returns & Refunds</a></li>
+            <li><a href="#">Responsible Alcohol Policy</a></li>
           </ul>
         </div>
         <div class="footer-col">

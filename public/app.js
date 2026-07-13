@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
   setupEventListeners();
   startCarouselAutoPlay();
+  startFlashSaleCountdown();
   
   // Poll logs for the audit console
   setInterval(fetchLogs, 2000);
@@ -312,6 +313,7 @@ function switchView(role) {
   } else if (role === 'admin') {
     document.getElementById('adminViewSection').style.display = 'block';
     populateAdminDropdowns();
+    renderAdminProducts();
   } else if (role === 'superadmin') {
     document.getElementById('superadminViewSection').style.display = 'block';
     loadSuperAdminDashboard();
@@ -406,10 +408,130 @@ function filterFlashSales() {
 // ==========================================
 // STOREFRONT CATALOG RENDER
 // ==========================================
+function getCategoryName(categoryId) {
+  return state.categories.find(category => category.id === categoryId)?.name || 'Ghumti Select';
+}
+
+function buildProductCardMarkup(prod, compact = false) {
+  const hasImage = prod.imageUrl && prod.imageUrl !== '';
+  let imageHtml = '';
+
+  if (hasImage) {
+    imageHtml = `<img src="${prod.imageUrl}" class="product-image" alt="${prod.name}" loading="lazy">`;
+  } else {
+    let icon = '📦';
+    let gradientClass = 'gradient-fallback-default';
+    if (prod.categoryId === 1) { icon = '🥃'; gradientClass = 'gradient-fallback-liquor'; }
+    else if (prod.categoryId === 2) { icon = '🍎'; gradientClass = 'gradient-fallback-groceries'; }
+    else if (prod.categoryId === 3) { icon = '☕'; gradientClass = 'gradient-fallback-coffee'; }
+    imageHtml = `<div class="${gradientClass}">${icon}</div>`;
+  }
+
+  const ageRestrictedBadge = prod.isAgeRestricted ? '<span class="restricted-pill">18+ verified delivery</span>' : '';
+  const stockClass = prod.stock === 0 ? 'out' : (prod.stock < 5 ? 'low' : '');
+  const stockText = prod.stock === 0 ? 'Out of stock' : (prod.stock < 5 ? `Only ${prod.stock} left` : 'Ready to deliver');
+  const ratingText = prod.averageRating > 0 ? `${prod.averageRating.toFixed(1)} (${prod.ratingCount || 0})` : 'New';
+  const isDiscounted = prod.originalPrice && prod.originalPrice > prod.price;
+  const discountPct = isDiscounted ? Math.round(((prod.originalPrice - prod.price) / prod.originalPrice) * 100) : 0;
+  const savings = isDiscounted ? prod.originalPrice - prod.price : 0;
+
+  const pricingHtml = isDiscounted ? `
+    <div class="product-price-row">
+      <span class="price-pill">NPR ${prod.price.toLocaleString()}</span>
+      <div class="old-price-container">
+        <span class="old-price">NPR ${prod.originalPrice.toLocaleString()}</span>
+        <span class="percent-off">-${discountPct}%</span>
+      </div>
+    </div>
+    <span class="save-tag">You save NPR ${savings.toLocaleString()}</span>
+  ` : `<div class="product-price-row"><span class="price-pill">NPR ${prod.price.toLocaleString()}</span></div>`;
+
+  return `
+    <article class="product-card ${compact ? 'compact-product-card' : ''}">
+      ${ageRestrictedBadge}
+      ${isDiscounted ? `<span class="deal-corner-badge">-${discountPct}%</span>` : ''}
+      <button class="wishlist-btn" type="button" aria-label="Save ${prod.name} to wishlist">♡</button>
+      <div class="product-image-container" onclick="openProductDetail(${prod.id})" role="button" tabindex="0">
+        ${imageHtml}
+      </div>
+      <div class="product-info-block">
+        <span class="product-brand">${getCategoryName(prod.categoryId)}</span>
+        <h3 class="product-title" onclick="openProductDetail(${prod.id})">${prod.name}</h3>
+        <div class="product-meta-row">
+          <span class="rating-pill">★ ${ratingText}</span>
+          <span class="stock-status ${stockClass}">${stockText}</span>
+        </div>
+        ${pricingHtml}
+        <div class="delivery-promise"><strong>Express</strong> delivery in 30–60 min</div>
+        <button class="btn-primary add-cart-btn" onclick="addToCart(${prod.id})" ${prod.stock === 0 ? 'disabled' : ''}>
+          ${prod.stock === 0 ? 'Sold out' : 'Add to cart'}
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+function renderCategoryShortcuts() {
+  const rail = document.getElementById('categoryShortcutRail');
+  if (!rail) return;
+
+  const categoryArt = {
+    1: { image: '/dept_liquor.png', tone: 'shortcut-liquor' },
+    2: { image: '/dept_grocery.png', tone: 'shortcut-grocery' },
+    3: { image: '/dept_coffee.png', tone: 'shortcut-coffee' }
+  };
+
+  const shortcuts = state.subcategories.map(subcategory => ({
+    label: subcategory.name,
+    categoryId: subcategory.categoryId,
+    ...(categoryArt[subcategory.categoryId] || categoryArt[2])
+  }));
+
+  shortcuts.push({ label: 'Flash Deals', categoryId: 'discounted', image: '/dept_deal.png', tone: 'shortcut-deals' });
+  rail.innerHTML = shortcuts.map(item => `
+    <button class="category-shortcut ${item.tone}" onclick="${item.categoryId === 'discounted' ? 'filterFlashSales()' : `filterCategory(${item.categoryId})`}">
+      <span class="shortcut-image-wrap"><img src="${item.image}" alt="" loading="lazy"></span>
+      <strong>${item.label}</strong>
+      <span>Shop now</span>
+    </button>
+  `).join('');
+}
+
+function renderProductRail(containerId, products) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = products.length
+    ? products.map(product => buildProductCardMarkup(product, true)).join('')
+    : '<p class="empty-msg">More products are arriving soon.</p>';
+}
+
+function renderLandingCollections() {
+  renderCategoryShortcuts();
+  const discounted = state.products.filter(product => product.originalPrice && product.originalPrice > product.price);
+  const essentials = state.products.filter(product => product.categoryId === 2);
+  renderProductRail('flashSaleRail', discounted);
+  renderProductRail('essentialsRail', essentials);
+}
+
+function startFlashSaleCountdown() {
+  let remainingSeconds = 6 * 60 * 60;
+  setInterval(() => {
+    const timer = document.getElementById('saleTimer');
+    if (!timer) return;
+    remainingSeconds = Math.max(0, remainingSeconds - 1);
+    const hours = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(remainingSeconds % 60).padStart(2, '0');
+    timer.textContent = `Ends in ${hours}:${minutes}:${seconds}`;
+  }, 1000);
+}
+
 function renderProducts() {
   const grid = document.getElementById('productsGrid');
   const filtersContainer = document.getElementById('categoryFilters');
   grid.innerHTML = '';
+
+  renderLandingCollections();
 
   filtersContainer.innerHTML = '<button class="filter-pill ' + (state.activeCategoryFilter === 'all' ? 'active' : '') + '" onclick="filterCategory(\'all\')">All Categories</button>';
   state.categories.forEach(cat => {
@@ -420,6 +542,10 @@ function renderProducts() {
   filtersContainer.innerHTML += `<button class="filter-pill ${discountActive}" onclick="filterFlashSales()">⚡ Discounts</button>`;
 
   const query = document.getElementById('searchInput').value.toLowerCase();
+  const homeMerchandising = document.querySelector('.home-merchandising');
+  if (homeMerchandising) {
+    homeMerchandising.style.display = state.activeCategoryFilter === 'all' && query === '' ? 'block' : 'none';
+  }
 
   const filteredProducts = state.products.filter(prod => {
     let matchesCategory = false;
@@ -440,69 +566,7 @@ function renderProducts() {
     return;
   }
 
-  filteredProducts.forEach(prod => {
-    const hasImage = prod.imageUrl && prod.imageUrl !== '';
-    let imageHtml = '';
-    
-    if (hasImage) {
-      imageHtml = `<img src="${prod.imageUrl}" class="product-image" alt="${prod.name}">`;
-    } else {
-      let icon = '📦';
-      let gradientClass = 'gradient-fallback-default';
-      if (prod.categoryId === 1) { icon = '🥃'; gradientClass = 'gradient-fallback-liquor'; }
-      else if (prod.categoryId === 2) { icon = '🍎'; gradientClass = 'gradient-fallback-groceries'; }
-      else if (prod.categoryId === 3) { icon = '☕'; gradientClass = 'gradient-fallback-coffee'; }
-      
-      imageHtml = `<div class="${gradientClass}">${icon}</div>`;
-    }
-
-    const ageRestrictedBadge = prod.isAgeRestricted ? '<span class="restricted-pill">⚠️ Age 18+</span>' : '';
-    const stockClass = prod.stock === 0 ? 'out' : (prod.stock < 5 ? 'low' : '');
-    const stockText = prod.stock === 0 ? 'Out of Stock' : (prod.stock < 5 ? `Only ${prod.stock} left!` : `In Stock: ${prod.stock}`);
-    
-    let pricingHtml = '';
-    if (prod.originalPrice && prod.originalPrice > prod.price) {
-      const discountPct = Math.round(((prod.originalPrice - prod.price) / prod.originalPrice) * 100);
-      const savings = prod.originalPrice - prod.price;
-      pricingHtml = `
-        <div class="product-price-row">
-          <span class="price-pill">NPR ${prod.price.toLocaleString()}</span>
-          <div class="old-price-container">
-            <span class="old-price">NPR ${prod.originalPrice.toLocaleString()}</span>
-            <span class="percent-off">-${discountPct}%</span>
-            <span class="save-tag">Save NPR ${savings}</span>
-          </div>
-        </div>
-      `;
-    } else {
-      pricingHtml = `
-        <div class="product-price-row">
-          <span class="price-pill">NPR ${prod.price.toLocaleString()}</span>
-        </div>
-      `;
-    }
-
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.innerHTML = `
-      ${ageRestrictedBadge}
-      <div class="product-image-container" onclick="openProductDetail(${prod.id})">
-        ${imageHtml}
-      </div>
-      <div class="product-info-block">
-        <h3 class="product-title" onclick="openProductDetail(${prod.id})">${prod.name}</h3>
-        <div class="product-meta-row">
-          <span class="rating-pill">⭐ ${prod.averageRating > 0 ? prod.averageRating.toFixed(1) : 'N/A'}</span>
-          <span class="stock-status ${stockClass}">${stockText}</span>
-        </div>
-        ${pricingHtml}
-        <button class="btn-primary w-full mt-large" onclick="addToCart(${prod.id})" ${prod.stock === 0 ? 'disabled' : ''}>
-          ${prod.stock === 0 ? 'Sold Out' : '🛒 Add to Cart'}
-        </button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+  grid.innerHTML = filteredProducts.map(product => buildProductCardMarkup(product)).join('');
 }
 
 // Search field triggers
@@ -600,6 +664,8 @@ function updateCartUI() {
   document.getElementById('cartTax').textContent = `NPR ${tax.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
   document.getElementById('cartDelivery').textContent = `NPR ${delivery.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
   document.getElementById('cartTotal').textContent = `NPR ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+  const headerCartTotal = document.getElementById('headerCartTotal');
+  if (headerCartTotal) headerCartTotal.textContent = `NPR ${subtotal.toLocaleString()}`;
 }
 
 function adjustQty(productId, change) {
@@ -1054,6 +1120,7 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
       alert(`Product '${data.name}' uploaded successfully!`);
       form.reset();
       await fetchProducts();
+      renderAdminProducts();
     }
   } catch (err) {
     console.error(err);
@@ -1432,5 +1499,155 @@ function setupEventListeners() {
     }
   });
 
+  const editOverlay = document.getElementById('editProductModalOverlay');
+  if (editOverlay) {
+    document.getElementById('closeEditProductBtn').addEventListener('click', () => {
+      editOverlay.classList.remove('active');
+    });
+    editOverlay.addEventListener('click', (e) => {
+      if (e.target === editOverlay) {
+        editOverlay.classList.remove('active');
+      }
+    });
+  }
+
   const dBar = document.getElementById('devSandboxBar'); if(dBar) dBar.classList.add('collapsed'); 
 }
+
+// ==========================================================================
+// ADMIN CATALOG MANAGEMENT CONTROLLERS
+// ==========================================================================
+
+// RENDER ADMIN PRODUCT CATALOG TABLE
+function renderAdminProducts() {
+  const tableBody = document.getElementById('adminProductsTableBody');
+  if (!tableBody) return;
+  tableBody.innerHTML = '';
+
+  state.products.forEach(prod => {
+    const category = state.categories.find(c => c.id === prod.categoryId);
+    const categoryName = category ? category.name : 'Unknown';
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="admin-prod-img-box">
+          ${prod.imageUrl ? `<img src="${prod.imageUrl}" class="admin-prod-thumb">` : `<span style="font-size:20px;">📦</span>`}
+        </div>
+      </td>
+      <td><strong>${prod.name}</strong></td>
+      <td><span class="admin-cat-badge">${categoryName}</span></td>
+      <td><strong>NPR ${prod.price.toLocaleString()}</strong></td>
+      <td><span class="admin-stock-num ${prod.stock === 0 ? 'out' : (prod.stock < 5 ? 'low' : '')}">${prod.stock}</span></td>
+      <td>${prod.isAgeRestricted ? '<span class="status-badge alert">Yes (18+)</span>' : '<span class="status-badge success">No</span>'}</td>
+      <td>
+        <div class="admin-actions-cell">
+          <button class="btn-table-edit" onclick="openEditProductModal(${prod.id})">✏️ Edit</button>
+          <button class="btn-table-delete" onclick="deleteProduct(${prod.id})">🗑️ Delete</button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+// DELETE PRODUCT CALL
+async function deleteProduct(productId) {
+  const prod = state.products.find(p => p.id === productId);
+  if (!prod) return;
+  
+  if (!confirm(`Are you sure you want to delete '${prod.name}' from the catalog?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert(`Product '${prod.name}' deleted successfully.`);
+      await fetchProducts();
+      renderAdminProducts();
+      renderProducts(); // refresh customer storefront as well
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to delete product.');
+  }
+}
+
+// EDIT PRODUCT MODAL CONTROLS
+function openEditProductModal(productId) {
+  const prod = state.products.find(p => p.id === productId);
+  if (!prod) return;
+
+  document.getElementById('editProductId').value = prod.id;
+  document.getElementById('editProductName').value = prod.name;
+  document.getElementById('editProductPrice').value = prod.price;
+  document.getElementById('editProductStock').value = prod.stock;
+  document.getElementById('editProductAgeRestricted').checked = prod.isAgeRestricted;
+
+  // Populate category list in edit dropdown
+  const editCatSelect = document.getElementById('editProductCategory');
+  const editSubSelect = document.getElementById('editProductSubcategory');
+  
+  editCatSelect.innerHTML = '';
+  state.categories.forEach(c => {
+    const selected = c.id === prod.categoryId ? 'selected' : '';
+    editCatSelect.innerHTML += `<option value="${c.id}" ${selected}>${c.name}</option>`;
+  });
+
+  // Handle category change
+  editCatSelect.onchange = (e) => {
+    populateSubcategoriesDropdown(e.target.value, editSubSelect);
+  };
+
+  // Populate subcategories for active category
+  populateSubcategoriesDropdown(prod.categoryId, editSubSelect);
+  editSubSelect.value = prod.subcategoryId;
+
+  document.getElementById('editProductModalOverlay').classList.add('active');
+}
+
+// SUBMIT EDIT PRODUCT FORM
+document.getElementById('editProductForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const productId = document.getElementById('editProductId').value;
+  const formData = new FormData();
+
+  formData.append('name', document.getElementById('editProductName').value);
+  formData.append('categoryId', document.getElementById('editProductCategory').value);
+  formData.append('subcategoryId', document.getElementById('editProductSubcategory').value);
+  formData.append('price', document.getElementById('editProductPrice').value);
+  formData.append('stock', document.getElementById('editProductStock').value);
+  formData.append('isAgeRestricted', document.getElementById('editProductAgeRestricted').checked);
+  
+  const fileInput = document.getElementById('editProductImage');
+  if (fileInput.files.length > 0) {
+    formData.append('image', fileInput.files[0]);
+  }
+
+  try {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'PUT',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert('Product updated successfully!');
+      document.getElementById('editProductModalOverlay').classList.remove('active');
+      document.getElementById('editProductImage').value = ''; // clear input
+      await fetchProducts();
+      renderAdminProducts();
+      renderProducts(); // refresh storefront
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to update product details.');
+  }
+});

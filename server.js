@@ -303,6 +303,48 @@ app.post('/api/products', upload.single('image'), (req, res) => {
   res.json(newProduct);
 });
 
+// Edit product details
+app.put('/api/products/:id', upload.single('image'), (req, res) => {
+  const productId = parseInt(req.params.id);
+  const { name, price, stock, isAgeRestricted, categoryId, subcategoryId } = req.body;
+  
+  const product = db.products.find(p => p.id === productId);
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found.' });
+  }
+
+  if (name) product.name = name;
+  if (price) {
+    product.price = parseFloat(price);
+    product.originalPrice = parseFloat(price); // sync
+  }
+  if (stock !== undefined) product.stock = parseInt(stock);
+  if (isAgeRestricted !== undefined) product.isAgeRestricted = isAgeRestricted === 'true' || isAgeRestricted === true;
+  if (categoryId) product.categoryId = parseInt(categoryId);
+  if (subcategoryId) product.subcategoryId = parseInt(subcategoryId);
+
+  if (req.file) {
+    product.imageUrl = `/uploads/${req.file.filename}`;
+  }
+
+  logEvent('info', 'Product Updated', `Product '${product.name}' (ID: ${product.id}) updated by Admin.`);
+  res.json({ success: true, product });
+});
+
+// Delete product
+app.delete('/api/products/:id', (req, res) => {
+  const productId = parseInt(req.params.id);
+  const index = db.products.findIndex(p => p.id === productId);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Product not found.' });
+  }
+
+  const name = db.products[index].name;
+  db.products.splice(index, 1);
+  logEvent('info', 'Product Deleted', `Product '${name}' (ID: ${productId}) deleted by Admin.`);
+  res.json({ success: true, message: 'Product deleted successfully.' });
+});
+
 // ==========================================
 // RATING & FEEDBACK API
 // ==========================================
