@@ -278,8 +278,23 @@ function getFullOrders() {
 // ==========================================
 // DATABASE SEEDING ROUTINE
 // ==========================================
-const catCount = db.prepare('SELECT COUNT(*) as count FROM categories').get().count;
-if (catCount === 0) {
+// DATABASE SEEDING ROUTINE
+// ==========================================
+const productCount = db.prepare('SELECT COUNT(*) as count FROM products').get().count;
+if (productCount !== 30) {
+  // Clear any existing tables so we start fresh and avoid unique constraint failures on users/categories
+  db.exec(`
+    DELETE FROM reviews;
+    DELETE FROM order_items;
+    DELETE FROM payment_attempts;
+    DELETE FROM orders;
+    DELETE FROM products;
+    DELETE FROM subcategories;
+    DELETE FROM categories;
+    DELETE FROM users;
+    DELETE FROM purchases;
+  `);
+
   // Seed categories
   db.prepare("INSERT INTO categories (id, name) VALUES (1, 'Liquor')").run();
   db.prepare("INSERT INTO categories (id, name) VALUES (2, 'Groceries')").run();
@@ -307,13 +322,43 @@ if (catCount === 0) {
     'rider@gmail.com', hashPassword('password123'), 'Rider Ram', '1998-03-12', 'operations'
   );
 
-  // Seed products
+  // Seed products (10 items per category)
   const seedProducts = [
-    { id: 1, name: 'Yeti Old Durbar Whiskey (750ml)', categoryId: 1, subcategoryId: 1, price: 3400, originalPrice: 3800, costPrice: 2400, mrp: 3800, stock: 10, isAgeRestricted: 1, imageUrl: '/placeholder_whiskey.png' },
-    { id: 2, name: 'Khukri Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 2100, originalPrice: 2400, costPrice: 1500, mrp: 2400, stock: 15, isAgeRestricted: 1, imageUrl: '/placeholder_rum.png' },
-    { id: 3, name: 'Himalayan Organic Arabica Beans (500g)', categoryId: 3, subcategoryId: 6, price: 1250, originalPrice: 1500, costPrice: 850, mrp: 1500, stock: 20, isAgeRestricted: 0, imageUrl: '/placeholder_coffee.png' },
-    { id: 4, name: 'Fresh cow milk (1L)', categoryId: 2, subcategoryId: 3, price: 110, originalPrice: 110, costPrice: 80, mrp: 110, stock: 50, isAgeRestricted: 0, imageUrl: '/placeholder_milk.png' },
-    { id: 5, name: 'Current Hot & Spicy Noodles (120g)', categoryId: 2, subcategoryId: 4, price: 60, originalPrice: 75, costPrice: 42, mrp: 75, stock: 80, isAgeRestricted: 0, imageUrl: '/placeholder_noodles.png' }
+    // --- 10 Liquor Items (5 Whiskey, 5 Rum) ---
+    { id: 1, name: 'Yeti Old Durbar Whiskey (750ml)', categoryId: 1, subcategoryId: 1, price: 3400, originalPrice: 3800, costPrice: 2400, mrp: 3800, stock: 25, isAgeRestricted: 1, imageUrl: '' },
+    { id: 2, name: 'Old Durbar Black Chimney (750ml)', categoryId: 1, subcategoryId: 1, price: 4200, originalPrice: 4500, costPrice: 3000, mrp: 4500, stock: 12, isAgeRestricted: 1, imageUrl: '' },
+    { id: 3, name: 'Signature Premier Whiskey (750ml)', categoryId: 1, subcategoryId: 1, price: 2800, originalPrice: 3000, costPrice: 1900, mrp: 3000, stock: 20, isAgeRestricted: 1, imageUrl: '' },
+    { id: 4, name: 'Royal Stag Barrel Select (750ml)', categoryId: 1, subcategoryId: 1, price: 2200, originalPrice: 2400, costPrice: 1500, mrp: 2400, stock: 35, isAgeRestricted: 1, imageUrl: '' },
+    { id: 5, name: "Jack Daniel's No. 7 (1L)", categoryId: 1, subcategoryId: 1, price: 7800, originalPrice: 8500, costPrice: 5500, mrp: 8500, stock: 8, isAgeRestricted: 1, imageUrl: '' },
+    { id: 6, name: 'Khukri XXX Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 2100, originalPrice: 2400, costPrice: 1500, mrp: 2400, stock: 30, isAgeRestricted: 1, imageUrl: '' },
+    { id: 7, name: 'Khukri Spice Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 2250, originalPrice: 2500, costPrice: 1600, mrp: 2500, stock: 18, isAgeRestricted: 1, imageUrl: '' },
+    { id: 8, name: 'Captain Morgan Spiced Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 3200, originalPrice: 3500, costPrice: 2200, mrp: 3500, stock: 14, isAgeRestricted: 1, imageUrl: '' },
+    { id: 9, name: 'Bacardi Carta Blanca (750ml)', categoryId: 1, subcategoryId: 2, price: 3400, originalPrice: 3800, costPrice: 2300, mrp: 3800, stock: 16, isAgeRestricted: 1, imageUrl: '' },
+    { id: 10, name: 'Malibu Coconut Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 3900, originalPrice: 4200, costPrice: 2700, mrp: 4200, stock: 10, isAgeRestricted: 1, imageUrl: '' },
+
+    // --- 10 Groceries Items (5 Milk & Dairy, 5 Snacks & Bites) ---
+    { id: 11, name: 'Fresh Cow Milk (1L)', categoryId: 2, subcategoryId: 3, price: 110, originalPrice: 110, costPrice: 80, mrp: 110, stock: 50, isAgeRestricted: 0, imageUrl: '' },
+    { id: 12, name: 'DDC Standard Butter (500g)', categoryId: 2, subcategoryId: 3, price: 480, originalPrice: 500, costPrice: 380, mrp: 500, stock: 25, isAgeRestricted: 0, imageUrl: '' },
+    { id: 13, name: 'Amul Processed Cheese Blocks (200g)', categoryId: 2, subcategoryId: 3, price: 320, originalPrice: 350, costPrice: 240, mrp: 350, stock: 30, isAgeRestricted: 0, imageUrl: '' },
+    { id: 14, name: 'DDC Sweet Yogurt (500ml)', categoryId: 2, subcategoryId: 3, price: 95, originalPrice: 100, costPrice: 70, mrp: 100, stock: 40, isAgeRestricted: 0, imageUrl: '' },
+    { id: 15, name: 'Himalayan Yak Cheese (250g)', categoryId: 2, subcategoryId: 3, price: 650, originalPrice: 700, costPrice: 480, mrp: 700, stock: 15, isAgeRestricted: 0, imageUrl: '' },
+    { id: 16, name: 'Current Hot & Spicy Noodles (120g)', categoryId: 2, subcategoryId: 4, price: 60, originalPrice: 75, costPrice: 42, mrp: 75, stock: 100, isAgeRestricted: 0, imageUrl: '' },
+    { id: 17, name: 'Lays Classic Salted Chips (115g)', categoryId: 2, subcategoryId: 4, price: 150, originalPrice: 160, costPrice: 110, mrp: 160, stock: 60, isAgeRestricted: 0, imageUrl: '' },
+    { id: 18, name: 'Kurmure Masala Munch (100g)', categoryId: 2, subcategoryId: 4, price: 50, originalPrice: 50, costPrice: 35, mrp: 50, stock: 120, isAgeRestricted: 0, imageUrl: '' },
+    { id: 19, name: 'Pringles Sour Cream & Onion (107g)', categoryId: 2, subcategoryId: 4, price: 290, originalPrice: 320, costPrice: 200, mrp: 320, stock: 45, isAgeRestricted: 0, imageUrl: '' },
+    { id: 20, name: 'Haldirams Bhujia Sev (350g)', categoryId: 2, subcategoryId: 4, price: 220, originalPrice: 240, costPrice: 160, mrp: 240, stock: 35, isAgeRestricted: 0, imageUrl: '' },
+
+    // --- 10 Coffee Items (5 Brews, 5 Specialty Beans) ---
+    { id: 21, name: 'Iced Caramel Macchiato', categoryId: 3, subcategoryId: 5, price: 320, originalPrice: 350, costPrice: 120, mrp: 350, stock: 50, isAgeRestricted: 0, imageUrl: '' },
+    { id: 22, name: 'Hot Spanish Latte (Double Shot)', categoryId: 3, subcategoryId: 5, price: 280, originalPrice: 300, costPrice: 90, mrp: 300, stock: 50, isAgeRestricted: 0, imageUrl: '' },
+    { id: 23, name: 'Premium Cold Brew Coffee (300ml)', categoryId: 3, subcategoryId: 5, price: 250, originalPrice: 280, costPrice: 80, mrp: 280, stock: 30, isAgeRestricted: 0, imageUrl: '' },
+    { id: 24, name: 'Hot Americano (12oz)', categoryId: 3, subcategoryId: 5, price: 180, originalPrice: 200, costPrice: 50, mrp: 200, stock: 50, isAgeRestricted: 0, imageUrl: '' },
+    { id: 25, name: 'Creamy Cafe Mocha', categoryId: 3, subcategoryId: 5, price: 340, originalPrice: 380, costPrice: 130, mrp: 380, stock: 50, isAgeRestricted: 0, imageUrl: '' },
+    { id: 26, name: 'Himalayan Organic Arabica Beans (500g)', categoryId: 3, subcategoryId: 6, price: 1250, originalPrice: 1500, costPrice: 850, mrp: 1500, stock: 25, isAgeRestricted: 0, imageUrl: '' },
+    { id: 27, name: 'Jalpa Gold Premium Beans (250g)', categoryId: 3, subcategoryId: 6, price: 750, originalPrice: 850, costPrice: 500, mrp: 850, stock: 20, isAgeRestricted: 0, imageUrl: '' },
+    { id: 28, name: 'Mount Everest Specialty Coffee (1kg)', categoryId: 3, subcategoryId: 6, price: 2800, originalPrice: 3200, costPrice: 1800, mrp: 3200, stock: 15, isAgeRestricted: 0, imageUrl: '' },
+    { id: 29, name: 'Kathmandu Blend Espresso Roast (500g)', categoryId: 3, subcategoryId: 6, price: 1100, originalPrice: 1300, costPrice: 750, mrp: 1300, stock: 30, isAgeRestricted: 0, imageUrl: '' },
+    { id: 30, name: 'Annapurna Honey Processed Beans (250g)', categoryId: 3, subcategoryId: 6, price: 900, originalPrice: 1000, costPrice: 600, mrp: 1000, stock: 18, isAgeRestricted: 0, imageUrl: '' }
   ];
   
   const stmt = db.prepare(`
@@ -326,7 +371,7 @@ if (catCount === 0) {
 
   // Seed reviews
   db.prepare("INSERT INTO reviews (id, productId, rating, comment, username, date, isVerifiedBuyer) VALUES (1, 1, 5, 'Top tier Nepali whiskey, very smooth!', 'customer@gmail.com', '2026-07-10', 1)").run();
-  db.prepare("INSERT INTO reviews (id, productId, rating, comment, username, date, isVerifiedBuyer) VALUES (2, 3, 5, 'Incredible aroma, highly recommended.', 'customer@gmail.com', '2026-07-11', 1)").run();
+  db.prepare("INSERT INTO reviews (id, productId, rating, comment, username, date, isVerifiedBuyer) VALUES (2, 26, 5, 'Incredible aroma, highly recommended.', 'customer@gmail.com', '2026-07-11', 1)").run();
 
   // Recompute average ratings
   const updateAvgStmt = db.prepare(`
@@ -338,10 +383,10 @@ if (catCount === 0) {
 
   // Seed purchases
   db.prepare("INSERT INTO purchases (id, productNames, supplier, quantity, cost, date) VALUES (1, 'Yeti Old Durbar Whiskey (750ml)', 'Yeti Distillery', 20, 45000, '2026-07-01')").run();
-  db.prepare("INSERT INTO purchases (id, productNames, supplier, quantity, cost, date) VALUES (2, 'Khukri Rum (750ml)', 'Nepal Distilleries', 30, 48000, '2026-07-02')").run();
+  db.prepare("INSERT INTO purchases (id, productNames, supplier, quantity, cost, date) VALUES (2, 'Himalayan Organic Arabica Beans (500g)', 'Nepal Coffee Corp', 30, 25500, '2026-07-02')").run();
 
   // Initial log entry
-  db.prepare("INSERT INTO logs (timestamp, level, event, details) VALUES (?, 'info', 'System Boot', 'Express SQLite database initialized with seed values.')").run(new Date().toISOString());
+  db.prepare("INSERT INTO logs (timestamp, level, event, details) VALUES (?, 'info', 'System Boot', 'Express SQLite database initialized with 30 catalog products.')").run(new Date().toISOString());
 }
 
 // ==========================================
