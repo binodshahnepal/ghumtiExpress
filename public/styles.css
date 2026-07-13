@@ -1120,76 +1120,113 @@ h1, h2, h3, h4, h5, h6 {
 /* ==========================================================================
    E-COMMERCE FOOTER (Amazon Multi-column style)
    ========================================================================== */
+/* ==========================================================================
+   E-COMMERCE FOOTER (Sleek Dark Premium Finish)
+   ========================================================================== */
 .ecommerce-footer {
-  background: #232f3e; /* Amazon dark footer blue */
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding: 40px 0 20px 0;
-  margin-top: 40px;
+  background: #090d16;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 60px 0 20px 0;
+  margin-top: 60px;
 }
 
 .footer-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
 .footer-columns {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 1.5fr;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
   gap: 40px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding-bottom: 30px;
-  margin-bottom: 20px;
+  padding-bottom: 20px;
 }
 
 @media (max-width: 900px) {
   .footer-columns {
     grid-template-columns: 1fr 1fr;
+    gap: 30px;
   }
 }
 @media (max-width: 600px) {
   .footer-columns {
     grid-template-columns: 1fr;
+    gap: 30px;
   }
 }
 
-.footer-col h3 {
+.footer-col h3.footer-title {
   color: white;
-  font-size: 14px;
-  margin-bottom: 15px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  color: #fff;
 }
 
 .footer-col p.about-text {
   font-size: 13px;
-  color: #a6b1c2;
-  margin-bottom: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 16px;
 }
 
 .footer-col p.nrb-tag {
   font-size: 11px;
-  color: #febd69;
+  color: #64748b;
+  margin-top: 16px;
+  border-left: 2px solid rgba(245, 114, 36, 0.4);
+  padding-left: 8px;
 }
 
 .footer-col ul {
   list-style: none;
+  padding: 0;
 }
 
 .footer-col ul li {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .footer-col ul li a {
   font-size: 13px;
-  color: #a6b1c2;
+  color: #94a3b8;
   text-decoration: none;
-  transition: color 0.2s ease;
+  display: inline-block;
+  transition: all 0.2s ease;
 }
 
 .footer-col ul li a:hover {
-  color: #fff;
-  text-decoration: underline;
+  color: #f57224;
+  transform: translateX(4px);
+}
+
+.footer-social-links {
+  display: flex;
+  gap: 10px;
+}
+
+.social-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.social-icon:hover {
+  border-color: #f57224;
+  background: rgba(245, 114, 36, 0.06);
+  transform: translateY(-2px);
 }
 
 .payment-logos {
@@ -1199,22 +1236,72 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .pay-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
-  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-transform: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+  transition: all 0.25s ease;
+  cursor: default;
 }
 
-.pay-badge.esewa { background: #60bb46; color: white; }
-.pay-badge.khalti { background: #5c2d91; color: white; }
-.pay-badge.cips { background: #0d6efd; color: white; }
-.pay-badge.fone { background: #ef4444; color: white; }
+.pay-badge.esewa:hover {
+  border-color: #60bb46;
+  color: #60bb46;
+  background: rgba(96, 187, 70, 0.06);
+}
+
+.pay-badge.khalti:hover {
+  border-color: #5c2d91;
+  color: #a78bfa;
+  background: rgba(92, 45, 145, 0.06);
+}
+
+.pay-badge.cips:hover {
+  border-color: #0d6efd;
+  color: #38bdf8;
+  background: rgba(13, 110, 253, 0.06);
+}
+
+.pay-badge.fone:hover {
+  border-color: #ef4444;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.footer-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 30px 0 20px 0;
+}
 
 .footer-bottom {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
   font-size: 12px;
-  color: #a6b1c2;
+  color: #64748b;
+  padding-bottom: 10px;
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-bottom-links a {
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-bottom-links a:hover {
+  color: #f57224;
 }
 
 /* ==========================================================================
