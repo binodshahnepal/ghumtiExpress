@@ -46,6 +46,9 @@ async function initApp() {
   }
 
   // Restore login state
+  if (state.currentUser) {
+    state.currentRole = state.currentUser.role;
+  }
   updateAuthUI();
   
   // Set default view
