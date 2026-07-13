@@ -75,6 +75,13 @@ const db = {
       fullName: 'Shyam Bahadur',
       dob: '1975-09-20',
       role: 'superadmin'
+    },
+    {
+      username: 'rider@gmail.com',
+      password: 'password123',
+      fullName: 'Rider Ram',
+      dob: '1998-03-12',
+      role: 'operations'
     }
   ],
   categories: [
