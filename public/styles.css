@@ -277,6 +277,41 @@ h1, h2, h3, h4, h5, h6 {
   background: #e05e13;
 }
 
+.dashboard-toggle-btn {
+  padding: 8px 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  font-family: var(--font-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-toggle-btn.staff {
+  background: transparent;
+  border: 1.5px solid #f57224;
+  color: #f57224;
+}
+
+.dashboard-toggle-btn.staff:hover {
+  background: #f57224;
+  color: white;
+}
+
+.dashboard-toggle-btn.store {
+  background: transparent;
+  border: 1.5px solid #0f172a;
+  color: #0f172a;
+}
+
+.dashboard-toggle-btn.store:hover {
+  background: #0f172a;
+  color: white;
+}
+
 .logout-btn {
   background: transparent;
   border: 1px solid #cbd5e1;

@@ -144,15 +144,31 @@ function updateAuthUI() {
   const nameSpan = document.getElementById('headerUserName');
   const loginHeaderBtn = document.getElementById('loginHeaderBtn');
   const logoutBtn = document.getElementById('logoutBtn');
+  const dashToggleBtn = document.getElementById('dashboardToggleBtn');
 
   if (state.currentUser) {
     nameSpan.textContent = `${state.currentUser.fullName}`;
     loginHeaderBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
+
+    // Show dashboard toggle button if user is staff (admin, superadmin, operations)
+    if (['admin', 'superadmin', 'operations'].includes(state.currentUser.role)) {
+      dashToggleBtn.style.display = 'inline-block';
+      if (state.currentRole === 'customer') {
+        dashToggleBtn.textContent = '🛠️ Admin Panel';
+        dashToggleBtn.className = 'dashboard-toggle-btn staff';
+      } else {
+        dashToggleBtn.textContent = '🏪 View Storefront';
+        dashToggleBtn.className = 'dashboard-toggle-btn store';
+      }
+    } else {
+      dashToggleBtn.style.display = 'none';
+    }
   } else {
     nameSpan.textContent = 'Guest Mode';
     loginHeaderBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
+    dashToggleBtn.style.display = 'none';
   }
 }
 
@@ -1508,6 +1524,20 @@ function setupEventListeners() {
       if (e.target === editOverlay) {
         editOverlay.classList.remove('active');
       }
+    });
+  }
+
+  const dashBtn = document.getElementById('dashboardToggleBtn');
+  if (dashBtn) {
+    dashBtn.addEventListener('click', () => {
+      if (state.currentRole === 'customer') {
+        state.currentRole = state.currentUser.role;
+        switchView(state.currentUser.role);
+      } else {
+        state.currentRole = 'customer';
+        switchView('customer');
+      }
+      updateAuthUI();
     });
   }
 
