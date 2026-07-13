@@ -46,9 +46,9 @@ async function initApp() {
       state.cart = [];
       localStorage.removeItem('ghumti_cart');
       updateCartUI();
-      alert(`🎉 Payment Successful!\nYour order ${orderId} has been successfully verified and is now being processed.`);
+      showAlert('Payment Successful', `Your order ${orderId} has been successfully verified and is now being processed.`, 'success');
     } else if (status === 'failure') {
-      alert(`⚠️ Payment Failed!\nTransaction was cancelled or declined. (Code: ${errorMsg || 'Cancelled'})`);
+      showAlert('Payment Failed', `Transaction was cancelled or declined. (Code: ${errorMsg || 'Cancelled'})`, 'error');
     }
 
     // Clean URL query parameters
@@ -203,7 +203,7 @@ async function initiateGuestSession() {
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Authentication Error', data.error, 'error');
     } else {
       state.currentUser = data.user;
       localStorage.setItem('ghumti_user', JSON.stringify(data.user));
@@ -217,7 +217,7 @@ async function initiateGuestSession() {
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to initialize guest session.');
+    showAlert('Error', 'Failed to initialize guest session.', 'error');
   }
 }
 
@@ -250,7 +250,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Sign In Failed', data.error, 'error');
     } else {
       state.currentUser = data.user;
       localStorage.setItem('ghumti_user', JSON.stringify(data.user));
@@ -264,7 +264,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
   } catch (err) {
     console.error(err);
-    alert('Failed connecting to server auth.');
+    showAlert('Connection Error', 'Failed connecting to server auth.', 'error');
   }
 });
 
@@ -284,14 +284,14 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Registration Failed', data.error, 'error');
     } else {
-      alert('Account registered! Please sign in.');
+      showAlert('Registration Successful', 'Account registered! Please sign in.', 'success');
       document.getElementById('tabLoginBtn').click();
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to register.');
+    showAlert('Error', 'Failed to register.', 'error');
   }
 });
 
@@ -317,20 +317,20 @@ document.getElementById('logoutBtn').addEventListener('click', (e) => {
 const rSelEv = document.getElementById('roleSelector'); if(rSelEv) rSelEv.addEventListener('change', (e) => {
   const roleSelected = e.target.value;
   if (!state.currentUser && roleSelected !== 'customer') {
-    alert('Please sign in or register to access administration controls.');
+    showAlert('Access Restricted', 'Please sign in or register to access administration controls.', 'warning');
     e.target.value = 'customer';
     openOnboardingModal();
     return;
   }
   
   if (roleSelected === 'admin' && state.currentUser.role === 'customer') {
-    alert('Access Denied: Only Admins and Super Admins can access Catalog configuration.');
+    showAlert('Access Denied', 'Only Admins and Super Admins can access Catalog configuration.', 'error');
     e.target.value = 'customer';
     return;
   }
 
   if (roleSelected === 'superadmin' && state.currentUser.role !== 'superadmin') {
-    alert('Access Denied: Super Admin level authorization is required to access analytics.');
+    showAlert('Access Denied', 'Super Admin level authorization is required to access analytics.', 'error');
     e.target.value = state.currentRole;
     return;
   }
@@ -1787,4 +1787,50 @@ async function refreshCustomerOrders() {
   } catch (err) {
     console.error('Failed to load active orders tracker:', err);
   }
+}
+
+// ==========================================
+// SWEET ALERT MODAL HELPER DEFINITION
+// ==========================================
+function showAlert(title, message, iconType = 'info') {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('sweetAlertOverlay');
+    const iconEl = document.getElementById('sweetAlertIcon');
+    const titleEl = document.getElementById('sweetAlertTitle');
+    const msgEl = document.getElementById('sweetAlertMessage');
+    const btnEl = document.getElementById('sweetAlertBtn');
+
+    if (!overlay) {
+      alert(`${title}\n${message}`);
+      resolve();
+      return;
+    }
+
+    // Set classes and visual styles
+    iconEl.className = `sweet-alert-icon ${iconType}`;
+    if (iconType === 'success') {
+      iconEl.textContent = '✓';
+    } else if (iconType === 'error') {
+      iconEl.textContent = '✕';
+    } else if (iconType === 'warning') {
+      iconEl.textContent = '⚠️';
+    } else {
+      iconEl.textContent = 'ℹ️';
+    }
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+
+    // Open SweetAlert panel
+    overlay.classList.add('active');
+
+    // Click handler for confirmation
+    const handleClose = () => {
+      overlay.classList.remove('active');
+      btnEl.removeEventListener('click', handleClose);
+      resolve();
+    };
+
+    btnEl.addEventListener('click', handleClose);
+  });
 }
