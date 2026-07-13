@@ -1461,6 +1461,24 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
 }
 
+.gateway-btn.fonepay-btn {
+  background: linear-gradient(135deg, #a80f1d 0%, #d11226 100%);
+  color: white;
+}
+
+.gateway-btn.fonepay-btn:hover {
+  box-shadow: 0 4px 15px rgba(209, 18, 38, 0.4);
+}
+
+.gateway-btn.bank-btn {
+  background: linear-gradient(135deg, #0b5490 0%, #0088cc 100%);
+  color: white;
+}
+
+.gateway-btn.bank-btn:hover {
+  box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+}
+
 /* Star selection widget */
 .star-rating-selector {
   display: flex;
@@ -2283,7 +2301,7 @@ body { padding-bottom: 0; }
 }
 
 @media (max-width: 800px) {
-  .trust-item:nth-child(n+3), .search-category-label, .cart-label, .user-profile-badge, .install-app-btn { display: none; }
+  .trust-item:nth-child(n+3), .search-category-label, .cart-label, .user-profile-badge { display: none; }
   .ecommerce-header { position: relative; }
   .main-nav-bar .nav-container { padding: 0 14px; flex-wrap: wrap; }
   .logo-area { order: 1; }

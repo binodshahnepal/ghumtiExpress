@@ -102,6 +102,13 @@ async function initApp() {
   if (state.currentUser) {
     state.currentRole = state.currentUser.role;
   }
+
+  const shortcutCategory = Number(urlParams.get('category'));
+  if ([1, 2, 3].includes(shortcutCategory)) {
+    state.activeCategoryFilter = shortcutCategory;
+    state.currentRole = 'customer';
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
   updateAuthUI();
   
   // Set default view
@@ -829,6 +836,8 @@ async function triggerCheckout() {
 document.getElementById('payEsewaBtn').addEventListener('click', () => initiatePayment('esewa'));
 document.getElementById('payKhaltiBtn').addEventListener('click', () => initiatePayment('khalti'));
 document.getElementById('payConnectIpsBtn').addEventListener('click', () => initiatePayment('connectips'));
+document.getElementById('payFonepayBtn').addEventListener('click', () => initiatePayment('fonepay'));
+document.getElementById('payBankBtn').addEventListener('click', () => initiatePayment('bank'));
 
 async function initiatePayment(gateway) {
   checkoutOverlay.classList.remove('active');
@@ -859,6 +868,8 @@ async function initiatePayment(gateway) {
 const simOverlay = document.getElementById('gatewaySimulatorOverlay');
 const esewaSimCard = document.getElementById('esewaSimulator');
 const khaltiSimCard = document.getElementById('khaltiSimulator');
+const fonepaySimCard = document.getElementById('fonepaySimulator');
+const bankSimCard = document.getElementById('bankSimulator');
 
 let activeSimPayload = null;
 let activeSimGateway = null;
@@ -868,21 +879,35 @@ function launchSimulator(gateway, payload) {
   activeSimPayload = payload;
   
   simOverlay.classList.add('active');
-  esewaSimCard.classList.remove('active');
-  khaltiSimCard.classList.remove('active');
+  
+  // Hide all simulator panels first
+  esewaSimCard.style.display = 'none';
+  khaltiSimCard.style.display = 'none';
+  fonepaySimCard.style.display = 'none';
+  bankSimCard.style.display = 'none';
 
   if (gateway === 'esewa') {
-    esewaSimCard.classList.add('active');
+    esewaSimCard.style.display = 'block';
     document.getElementById('esewaSimUuid').textContent = payload.transaction_uuid;
     document.getElementById('esewaSimAmount').textContent = `NPR ${payload.total_amount.toLocaleString()}`;
     document.getElementById('tamperEsewaPrice').checked = false;
   } else if (gateway === 'khalti') {
-    khaltiSimCard.classList.add('active');
+    khaltiSimCard.style.display = 'block';
     document.getElementById('khaltiSimPidx').textContent = payload.pidx;
     document.getElementById('khaltiSimAmount').textContent = `NPR ${(payload.amount / 100).toLocaleString()}`;
     document.getElementById('khaltiStatusOverride').value = 'Completed';
+  } else if (gateway === 'fonepay') {
+    fonepaySimCard.style.display = 'block';
+    document.getElementById('fonepaySimUuid').textContent = payload.transaction_uuid;
+    document.getElementById('fonepaySimAmount').textContent = `NPR ${payload.total_amount.toLocaleString()}`;
+  } else if (gateway === 'bank') {
+    bankSimCard.style.display = 'block';
+    document.getElementById('bankVoucherOrderId').value = payload.orderId;
+    document.getElementById('bankSimAmount').textContent = `NPR ${payload.totalAmount.toLocaleString()}`;
+    document.getElementById('bankVoucherLabel').textContent = 'Click to select receipt screenshot...';
+    document.getElementById('bankVoucherFile').value = '';
   } else if (gateway === 'connectips') {
-    alert('Redirecting to simulated ConnectIPS interbank portal. Authorizing secure transfer...');
+    showAlert('connectIPS Redirect', 'Redirecting to simulated ConnectIPS interbank portal. Authorizing secure transfer...', 'info');
     setTimeout(() => {
       window.location.href = `/api/payment/callback/connectips?txnId=${payload.txnId}&status=SUCCESS`;
     }, 1500);
@@ -891,10 +916,12 @@ function launchSimulator(gateway, payload) {
 
 document.getElementById('simEsewaCancelBtn').addEventListener('click', dismissSimulator);
 document.getElementById('simKhaltiCancelBtn').addEventListener('click', dismissSimulator);
+document.getElementById('simFonepayCancelBtn').addEventListener('click', dismissSimulator);
+document.getElementById('simBankCancelBtn').addEventListener('click', dismissSimulator);
 
 function dismissSimulator() {
   simOverlay.classList.remove('active');
-  alert('Transaction cancelled by user.');
+  showAlert('Cancelled', 'Transaction has been cancelled by the user.', 'warning');
 }
 
 // eSewa Submit Payment
@@ -940,6 +967,63 @@ document.getElementById('simKhaltiPayBtn').addEventListener('click', () => {
   }
 
   window.location.href = `/api/payment/callback/khalti?pidx=${activeSimPayload.pidx}&status=${status}&purchase_order_id=${activeSimPayload.purchase_order_id}`;
+});
+
+// Fonepay Submit Payment
+document.getElementById('simFonepayPayBtn').addEventListener('click', () => {
+  state.cart = [];
+  localStorage.removeItem('ghumti_cart');
+  updateCartUI();
+  window.location.href = `/api/payment/callback/fonepay?txnId=${activeSimPayload.transaction_uuid}`;
+});
+
+// Bank Voucher File Input Change
+document.getElementById('bankVoucherFile').addEventListener('change', (e) => {
+  const label = document.getElementById('bankVoucherLabel');
+  if (e.target.files.length > 0) {
+    label.textContent = e.target.files[0].name;
+  } else {
+    label.textContent = 'Click to select receipt screenshot...';
+  }
+});
+
+// Bank Voucher Form Submit
+document.getElementById('bankVoucherForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const orderId = document.getElementById('bankVoucherOrderId').value;
+  const fileInput = document.getElementById('bankVoucherFile');
+  if (fileInput.files.length === 0) {
+    showAlert('Receipt Required', 'Please choose a photo screenshot of your deposit voucher or transaction record.', 'warning');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('orderId', orderId);
+  formData.append('voucher', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/api/payment/bank-upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Voucher Failed', data.error, 'error');
+    } else {
+      state.cart = [];
+      localStorage.removeItem('ghumti_cart');
+      updateCartUI();
+      simOverlay.classList.remove('active');
+      showAlert(
+        'Voucher Submitted',
+        'Your bank deposit voucher has been uploaded successfully! An administrator will audit the transaction and approve your order packing shortly.',
+        'success'
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Upload Error', 'Failed to upload bank deposit voucher.', 'error');
+  }
 });
 
 // ==========================================
@@ -1271,13 +1355,48 @@ async function loadSuperAdminDashboard() {
         <td>${t.orderId}</td>
         <td>${t.user}</td>
         <td>NPR ${t.amount.toLocaleString()}</td>
-        <td>${t.gateway.toUpperCase()}</td>
+        <td>${t.gateway ? t.gateway.toUpperCase() : 'UNKNOWN'}</td>
         <td>${t.txnUuid}</td>
         <td class="${statusClass}"><strong>${t.status.toUpperCase()}</strong></td>
         <td>${new Date(t.date).toLocaleDateString()}</td>
       </tr>
     `;
   });
+
+  // Render bank verification approvals
+  const bankApprovalsCard = document.getElementById('bankApprovalsCard');
+  const bankApprovalsTableBody = document.getElementById('bankApprovalsTableBody');
+  const resOrders = await fetch('/api/orders');
+  const ordersList = await resOrders.json();
+  const pendingBankOrders = ordersList.filter(o => o.status === 'pending_bank_verification');
+  
+  if (pendingBankOrders.length > 0) {
+    bankApprovalsCard.style.display = 'block';
+    bankApprovalsTableBody.innerHTML = '';
+    pendingBankOrders.forEach(o => {
+      bankApprovalsTableBody.innerHTML += `
+        <tr>
+          <td>${o.id}</td>
+          <td>${o.user.username}</td>
+          <td><strong>NPR ${o.totalAmount.toLocaleString()}</strong></td>
+          <td>
+            <a href="${o.voucherImageUrl}" target="_blank" style="color: #60a5fa; text-decoration: underline;">
+              View Deposit Slip 🔍
+            </a>
+          </td>
+          <td>${new Date(o.date).toLocaleDateString()}</td>
+          <td>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-primary" style="background: #10b981; padding: 6px 12px; font-size: 12px; border-radius: 6px;" onclick="approveBankVoucher('${o.id}')">Approve</button>
+              <button class="btn-cancel" style="background: #f43f5e; padding: 6px 12px; font-size: 12px; border-radius: 6px; border: none; color: white;" onclick="rejectBankVoucher('${o.id}')">Reject</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  } else {
+    bankApprovalsCard.style.display = 'none';
+  }
 }
 
 document.getElementById('restockForm').addEventListener('submit', async (e) => {
@@ -1295,9 +1414,9 @@ document.getElementById('restockForm').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Procurement Failed', data.error, 'error');
     } else {
-      alert('Procurement logged & stock updated.');
+      showAlert('Restocked Successfully', `Procured ${quantity} units of ${productNames} from ${supplier}. Stock updated!`, 'success');
       document.getElementById('restockSupplier').value = '';
       document.getElementById('restockQty').value = '';
       document.getElementById('restockCost').value = '';
@@ -1306,8 +1425,62 @@ document.getElementById('restockForm').addEventListener('submit', async (e) => {
     }
   } catch (err) {
     console.error(err);
+    showAlert('Procurement Error', 'Failed to submit procurement logs.', 'error');
   }
 });
+
+// Bank Verification Actions
+async function approveBankVoucher(orderId) {
+  const confirmed = await showAlert(
+    'Confirm Approval',
+    `Are you sure you want to approve payment for order ${orderId}? This will deduct inventory and release split fulfillment tickets.`,
+    'info',
+    true
+  );
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/admin/bank-approvals/${orderId}/approve`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Approval Failed', data.error, 'error');
+    } else {
+      showAlert('Payment Approved', `Order ${orderId} has been approved successfully! Logistics splits are generated.`, 'success');
+      await loadSuperAdminDashboard();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to approve bank deposit.', 'error');
+  }
+}
+
+async function rejectBankVoucher(orderId) {
+  const confirmed = await showAlert(
+    'Confirm Rejection',
+    `Are you sure you want to REJECT the deposit slip for order ${orderId}? This will cancel the order.`,
+    'warning',
+    true
+  );
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/admin/bank-approvals/${orderId}/reject`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (data.error) {
+      showAlert('Rejection Failed', data.error, 'error');
+    } else {
+      showAlert('Payment Rejected', `Order ${orderId} payment has been rejected and order cancelled.`, 'success');
+      await loadSuperAdminDashboard();
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Error', 'Failed to reject bank deposit.', 'error');
+  }
+}
 
 // ==========================================
 // LOGISTICS SPLIT & OPERATIONS PANEL

@@ -25,7 +25,7 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
-// Multer disk storage config for product images
+// Multer disk storage config for product images & bank vouchers
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadsDir);
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
-    cb(null, 'product-' + uniqueSuffix + ext);
+    cb(null, 'media-' + uniqueSuffix + ext);
   }
 });
 
@@ -135,6 +135,7 @@ db.exec(`
     driverConfirmedAge INTEGER NOT NULL DEFAULT 0,
     date TEXT NOT NULL,
     gateway TEXT DEFAULT NULL,
+    voucherImageUrl TEXT DEFAULT NULL,
     FOREIGN KEY(username) REFERENCES users(username)
   );
 `);
@@ -185,6 +186,13 @@ db.exec(`
     details TEXT NOT NULL
   );
 `);
+
+// Migration for existing tables to add voucherImageUrl column if missing
+try {
+  db.exec('ALTER TABLE orders ADD COLUMN voucherImageUrl TEXT DEFAULT NULL;');
+} catch (e) {
+  // Column already exists or table does not exist yet
+}
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -261,7 +269,8 @@ function getFullOrders() {
       },
       driverConfirmedAge: !!o.driverConfirmedAge,
       date: o.date,
-      gateway: o.gateway
+      gateway: o.gateway,
+      voucherImageUrl: o.voucherImageUrl
     };
   });
 }
@@ -796,6 +805,31 @@ app.post('/api/payment/initiate', (req, res) => {
         redirectUrl: `http://localhost:${PORT}/api/payment/callback/connectips?txnId=${transactionUuid}`
       }
     });
+  } else if (gateway === 'fonepay') {
+    db.prepare(`
+      INSERT INTO payment_attempts (orderId, txnUuid, status, gateway)
+      VALUES (?, ?, 'initiated', 'fonepay')
+    `).run(orderId, transactionUuid);
+
+    logEvent('info', 'Payment Initiated', `Fonepay QR checkout session initiated for order ${orderId}`);
+    return res.json({
+      success: true,
+      gateway: 'fonepay',
+      payload: {
+        transaction_uuid: transactionUuid,
+        total_amount: order.totalAmount
+      }
+    });
+  } else if (gateway === 'bank') {
+    logEvent('info', 'Payment Initiated', `Direct bank deposit selection initiated for order ${orderId}`);
+    return res.json({
+      success: true,
+      gateway: 'bank',
+      payload: {
+        orderId: order.id,
+        totalAmount: order.totalAmount
+      }
+    });
   }
 
   res.status(400).json({ error: 'Unsupported payment gateway.' });
@@ -928,6 +962,107 @@ app.get('/api/payment/callback/connectips', (req, res) => {
 
   logEvent('info', 'Payment Successful', `Order ${orderId} paid successfully via ConnectIPS.`);
   return res.redirect(`/payment-success?orderId=${orderId}`);
+});
+
+// FONEPAY CALLBACK HANDLER
+app.get('/api/payment/callback/fonepay', (req, res) => {
+  const { txnId } = req.query;
+  if (!txnId) {
+    return res.redirect('/payment-failure?error=missing_txnid');
+  }
+
+  logEvent('info', 'Fonepay Callback', `Simulated merchant QR scanning webhook for ticket ${txnId}`);
+
+  const attempt = db.prepare('SELECT * FROM payment_attempts WHERE txnUuid = ?').get(txnId);
+  if (!attempt) {
+    return res.redirect('/payment-failure?error=invalid_txnid');
+  }
+
+  const orderId = attempt.orderId;
+  const items = db.prepare('SELECT productId, qty FROM order_items WHERE orderId = ?').all();
+  for (const item of items) {
+    db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?').run(item.qty, item.productId);
+  }
+
+  db.prepare('UPDATE orders SET status = "paid_processing" WHERE id = ?').run(orderId);
+  db.prepare('UPDATE payment_attempts SET status = "completed" WHERE txnUuid = ?').run(txnId);
+
+  logEvent('info', 'Payment Successful', `Order ${orderId} paid successfully via Fonepay Business QR scan.`);
+  return res.redirect(`/payment-success?orderId=${orderId}`);
+});
+
+// BANK TRANSFER VOUCHER UPLOAD
+app.post('/api/payment/bank-upload', upload.single('voucher'), (req, res) => {
+  const { orderId } = req.body;
+  if (!orderId) {
+    return res.status(400).json({ error: 'Order ID is required.' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ error: 'Voucher receipt file is required.' });
+  }
+
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  const voucherUrl = `/uploads/${req.file.filename}`;
+  db.prepare('UPDATE orders SET status = "pending_bank_verification", voucherImageUrl = ? WHERE id = ?').run(
+    voucherUrl,
+    orderId
+  );
+
+  const txnUuid = `BANK-${orderId}-${Date.now()}`;
+  db.prepare(`
+    INSERT INTO payment_attempts (orderId, txnUuid, status, gateway)
+    VALUES (?, ?, 'pending_verification', 'bank')
+  `).run(orderId, txnUuid);
+
+  logEvent('info', 'Voucher Submitted', `Bank deposit voucher slip uploaded for order ${orderId}. Pending manual admin audit.`);
+  res.json({ success: true, voucherUrl });
+});
+
+// ADMIN BANK VOUCHER APPROVE/REJECT
+app.post('/api/admin/bank-approvals/:id/approve', (req, res) => {
+  const orderId = req.params.id;
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  if (order.status !== 'pending_bank_verification') {
+    return res.status(400).json({ error: 'Order is not pending bank verification.' });
+  }
+
+  // Deduct stock
+  const items = db.prepare('SELECT productId, qty FROM order_items WHERE orderId = ?').all();
+  for (const item of items) {
+    db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?').run(item.qty, item.productId);
+  }
+
+  db.prepare('UPDATE orders SET status = "paid_processing" WHERE id = ?').run(orderId);
+  db.prepare("UPDATE payment_attempts SET status = 'completed' WHERE orderId = ? AND gateway = 'bank'").run(orderId);
+
+  logEvent('info', 'Payment Successful', `Bank deposit voucher approved by Admin for order ${orderId}. Splitting fulfillment tickets.`);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/bank-approvals/:id/reject', (req, res) => {
+  const orderId = req.params.id;
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  if (order.status !== 'pending_bank_verification') {
+    return res.status(400).json({ error: 'Order is not pending bank verification.' });
+  }
+
+  db.prepare('UPDATE orders SET status = "cancelled" WHERE id = ?').run(orderId);
+  db.prepare("UPDATE payment_attempts SET status = 'failed' WHERE orderId = ? AND gateway = 'bank'").run(orderId);
+
+  logEvent('warning', 'Payment Failed', `Bank deposit voucher rejected by Admin for order ${orderId}. Order cancelled.`);
+  res.json({ success: true });
 });
 
 // ==========================================

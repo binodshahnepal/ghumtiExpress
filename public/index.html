@@ -434,6 +434,29 @@
         </div>
 
       </div>
+
+      <!-- Bank Deposit Vouchers Verification Queue -->
+      <div class="dashboard-card full-width mt-large" id="bankApprovalsCard" style="display: none; border: 1px dashed var(--accent-color);">
+        <h2 style="color: #60a5fa;">🏦 Bank Deposit Verification Queue</h2>
+        <p>Review uploaded bank transfer screenshots, match transaction numbers, and approve or reject order processing.</p>
+        <div class="table-container">
+          <table class="data-table" id="bankApprovalsTable">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Total Amount</th>
+                <th>Receipt Voucher</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bankApprovalsTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ==============================================
@@ -790,6 +813,18 @@
             <span class="gateway-logo">connectIPS</span>
             <span class="gateway-desc">Interbank Mobile Aggregator</span>
           </button>
+
+          <!-- Fonepay QR -->
+          <button class="gateway-btn fonepay-btn" id="payFonepayBtn">
+            <span class="gateway-logo">fonepay</span>
+            <span class="gateway-desc">Instant Merchant QR Code Scan</span>
+          </button>
+
+          <!-- Bank Transaction -->
+          <button class="gateway-btn bank-btn" id="payBankBtn">
+            <span class="gateway-logo">Bank Transfer</span>
+            <span class="gateway-desc">Voucher / Screenshot Upload</span>
+          </button>
         </div>
       </div>
     </div>
@@ -882,6 +917,92 @@
 
         <button class="btn-primary khalti w-full mt-large" id="simKhaltiPayBtn">Verify & Pay</button>
         <button class="btn-cancel w-full" id="simKhaltiCancelBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Fonepay Simulator -->
+    <div class="simulator-card fonepay" id="fonepaySimulator" style="display: none; background: #fff; color: #1e293b;">
+      <div class="sim-header" style="background: #d11226; color: white;">
+        <span class="sim-brand">Fonepay Business QR Payment</span>
+        <span class="sim-mode">Dynamic QR Sandbox</span>
+      </div>
+      <div class="sim-body" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; width: 100%; max-width: 250px;">
+          <div style="font-size: 11px; font-weight: bold; color: #d11226; margin-bottom: 8px;">Ghumti Express Pvt. Ltd.</div>
+          <div style="background: #fff; padding: 8px; border-radius: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; width: 180px; height: 180px; margin: 0 auto;">
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+              <rect x="0" y="0" width="25" height="25" fill="#1e293b"></rect>
+              <rect x="5" y="5" width="15" height="15" fill="#fff"></rect>
+              <rect x="8" y="8" width="9" height="9" fill="#d11226"></rect>
+              <rect x="75" y="0" width="25" height="25" fill="#1e293b"></rect>
+              <rect x="80" y="5" width="15" height="15" fill="#fff"></rect>
+              <rect x="83" y="8" width="9" height="9" fill="#d11226"></rect>
+              <rect x="0" y="75" width="25" height="25" fill="#1e293b"></rect>
+              <rect x="5" y="80" width="15" height="15" fill="#fff"></rect>
+              <rect x="8" y="83" width="9" height="9" fill="#d11226"></rect>
+              <rect x="35" y="10" width="10" height="5" fill="#1e293b"></rect>
+              <rect x="50" y="25" width="5" height="15" fill="#d11226"></rect>
+              <rect x="30" y="45" width="15" height="10" fill="#1e293b"></rect>
+              <rect x="60" y="50" width="10" height="10" fill="#1e293b"></rect>
+              <rect x="50" y="75" width="10" height="5" fill="#d11226"></rect>
+              <rect x="75" y="55" width="5" height="15" fill="#1e293b"></rect>
+              <rect x="80" y="40" width="15" height="5" fill="#1e293b"></rect>
+              <rect x="40" y="65" width="15" height="15" fill="#1e293b"></rect>
+              <circle cx="50" cy="50" r="10" fill="#d11226"></circle>
+              <text x="47" y="54" fill="#fff" font-size="12" font-weight="900">f</text>
+            </svg>
+          </div>
+          <div style="font-size: 14px; font-weight: 800; color: #1e293b; margin-top: 12px;" id="fonepaySimAmount">NPR 0.00</div>
+          <div style="font-size: 10px; color: #64748b;" id="fonepaySimUuid">ORD-XXX</div>
+        </div>
+        
+        <p style="font-size: 13px; color: #475569; margin-bottom: 20px;">
+          Scan with your Mobile Banking or Wallet App to pay instantly. Click the button below to simulate scanning confirmation.
+        </p>
+
+        <button class="btn-primary fonepay w-full" id="simFonepayPayBtn" style="background: #d11226; color: white;">Simulate Successful QR Payment</button>
+        <button class="btn-cancel w-full mt-small" id="simFonepayCancelBtn" style="border: 1px solid #cbd5e1; background: transparent; color: #475569;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Bank Transfer (Voucher Upload) Simulator -->
+    <div class="simulator-card bank" id="bankSimulator" style="display: none; background: #fff; color: #1e293b;">
+      <div class="sim-header" style="background: #0b5490; color: white;">
+        <span class="sim-brand">Bank Transfer & Voucher Upload</span>
+        <span class="sim-mode">Direct Bank Deposit</span>
+      </div>
+      <div class="sim-body" style="padding: 20px;">
+        <div style="background: #f0f7ff; border: 1px solid #d0e5ff; border-radius: 8px; padding: 14px; margin-bottom: 18px; font-size: 13px;">
+          <h4 style="margin-top: 0; color: #0b5490; font-weight: 700;">Ghumti Express Bank Accounts:</h4>
+          <div style="display: grid; grid-template-columns: 80px 1fr; gap: 4px; margin-bottom: 8px;">
+            <span>Bank:</span><strong>Nabil Bank Ltd.</strong>
+            <span>A/C Name:</span><strong>Ghumti Express Pvt. Ltd.</strong>
+            <span>A/C No:</span><strong>0110068940523000</strong>
+            <span>Branch:</span><strong>Teendhara, Kathmandu</strong>
+          </div>
+          <div style="border-top: 1px dashed #d0e5ff; padding-top: 6px; font-size: 11px; color: #555;">
+            * Or transfer to eSewa/Khalti Merchant wallet ID: **9841000000**
+          </div>
+        </div>
+
+        <form id="bankVoucherForm" enctype="multipart/form-data">
+          <input type="hidden" id="bankVoucherOrderId">
+          <div class="sim-detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between;">
+            <span>Amount Due:</span>
+            <strong id="bankSimAmount" style="color: #0b5490;">NPR 0.00</strong>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="color: #475569; font-weight: 600; display: block; margin-bottom: 6px;">Upload Deposit Slip or Transfer Screenshot</label>
+            <div class="file-drop-area" style="border: 2px dashed #0b5490; background: #f8fafc; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer; color: #0b5490; position: relative;">
+              <input type="file" id="bankVoucherFile" accept="image/*" required style="width: 100%; opacity: 0; position: absolute; left: 0; top: 0; cursor: pointer; height: 100%;">
+              <span id="bankVoucherLabel" style="font-size: 13px;">Click to select receipt screenshot...</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary w-full" style="background: #0b5490; color: white;">Submit Deposit Slip for Verification</button>
+          <button type="button" class="btn-cancel w-full mt-small" id="simBankCancelBtn" style="border: 1px solid #cbd5e1; background: transparent; color: #475569;">Cancel</button>
+        </form>
       </div>
     </div>
   </div>
