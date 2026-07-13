@@ -277,6 +277,26 @@ h1, h2, h3, h4, h5, h6 {
   background: #e05e13;
 }
 
+.logout-btn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-primary);
+  margin-left: 4px;
+}
+
+.logout-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
 .user-avatar {
   font-size: 18px;
 }
