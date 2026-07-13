@@ -440,11 +440,17 @@
           <form id="loginForm">
             <div class="form-group">
               <label for="loginEmail">Email Address</label>
-              <input type="email" id="loginEmail" placeholder="customer@gmail.com" required>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="loginEmail" placeholder="customer@gmail.com" required>
+              </div>
             </div>
             <div class="form-group">
               <label for="loginPassword">Password</label>
-              <input type="password" id="loginPassword" placeholder="••••••••" required>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
+              </div>
             </div>
             <button type="submit" class="btn-primary w-full">Sign In</button>
             
@@ -463,19 +469,31 @@
           <form id="signupForm">
             <div class="form-group">
               <label for="signupName">Full Name</label>
-              <input type="text" id="signupName" placeholder="Hari Bahadur" required>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="signupName" placeholder="Hari Bahadur" required>
+              </div>
             </div>
             <div class="form-group">
               <label for="signupEmail">Email Address</label>
-              <input type="email" id="signupEmail" placeholder="customer@gmail.com" required>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="signupEmail" placeholder="customer@gmail.com" required>
+              </div>
             </div>
             <div class="form-group">
               <label for="signupPassword">Password</label>
-              <input type="password" id="signupPassword" placeholder="Min. 8 characters" required>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="signupPassword" placeholder="Min. 8 characters" required>
+              </div>
             </div>
             <div class="form-group">
               <label for="signupDob">Date of Birth</label>
-              <input type="date" id="signupDob" required>
+              <div class="input-wrapper">
+                <span class="input-icon">📅</span>
+                <input type="date" id="signupDob" required>
+              </div>
               <small class="helper-text">You must be at least 18 years old to order alcohol products.</small>
             </div>
             <button type="submit" class="btn-primary w-full">Create Account</button>
