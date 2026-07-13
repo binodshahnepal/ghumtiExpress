@@ -91,6 +91,22 @@
          ============================================== -->
     <section id="customerViewSection" class="view-panel active">
       
+      <!-- CUSTOMER ACTIVE ORDERS TRACKER -->
+      <div class="customer-tracker-strip" id="customerDashboardArea" style="display: none;">
+        <div class="tracker-card">
+          <div class="tracker-header">
+            <div class="tracker-title-box">
+              <span class="pulse-indicator"></span>
+              <h3>Active Deliveries & Orders</h3>
+            </div>
+            <button class="btn-refresh-tracker" onclick="refreshCustomerOrders()">🔄 Refresh Status</button>
+          </div>
+          <div class="tracker-orders-list" id="customerActiveOrdersList">
+            <!-- Active order timelines rendered here -->
+          </div>
+        </div>
+      </div>
+
       <!-- HERO BANNER CAROUSEL -->
       <div class="hero-carousel-container" id="heroCarousel">
         <!-- Slide 1: Specialty Coffee -->
@@ -333,7 +349,10 @@
         <div class="kpi-card margin">
           <h3>Net Operating Margin</h3>
           <p class="value" id="kpiMargin">NPR 0.00</p>
-          <span class="pill" id="kpiMarginPill">Gross Margin</span>
+          <div class="margin-balance-bar">
+            <div class="margin-balance-fill" id="kpiMarginBar" style="width: 0%;"></div>
+          </div>
+          <span class="pill" id="kpiMarginPill" style="margin-top: 8px; display: inline-block;">Gross Margin</span>
         </div>
         <div class="kpi-card orders">
           <h3>Orders Placed</h3>

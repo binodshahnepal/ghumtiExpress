@@ -39,6 +39,26 @@ async function initApp() {
   await fetchOrders();
   fetchLogs();
 
+  // Check URL parameters for payment notifications
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('status')) {
+    const status = urlParams.get('status');
+    const orderId = urlParams.get('orderId');
+    const errorMsg = urlParams.get('error');
+
+    if (status === 'success') {
+      state.cart = [];
+      localStorage.removeItem('ghumti_cart');
+      updateCartUI();
+      alert(`🎉 Payment Successful!\nYour order ${orderId} has been successfully verified and is now being processed.`);
+    } else if (status === 'failure') {
+      alert(`⚠️ Payment Failed!\nTransaction was cancelled or declined. (Code: ${errorMsg || 'Cancelled'})`);
+    }
+
+    // Clean URL query parameters
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   // Load cart from session if exists
   const cachedCart = localStorage.getItem('ghumti_cart');
   if (cachedCart) {
@@ -173,6 +193,14 @@ function updateAuthUI() {
     loginHeaderBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
     dashToggleBtn.style.display = 'none';
+  }
+
+  // Refresh customer tracker strip depending on login state
+  if (state.currentUser && state.currentRole === 'customer') {
+    refreshCustomerOrders();
+  } else {
+    const area = document.getElementById('customerDashboardArea');
+    if (area) area.style.display = 'none';
   }
 }
 
@@ -330,6 +358,7 @@ function switchView(role) {
   if (role === 'customer') {
     document.getElementById('customerViewSection').style.display = 'block';
     renderProducts();
+    refreshCustomerOrders();
   } else if (role === 'admin') {
     document.getElementById('adminViewSection').style.display = 'block';
     populateAdminDropdowns();
@@ -1170,11 +1199,18 @@ async function loadSuperAdminDashboard() {
   document.getElementById('kpiOrders').textContent = summary.ordersCount;
 
   const marginPill = document.getElementById('kpiMarginPill');
+  const marginBar = document.getElementById('kpiMarginBar');
+  const marginPct = summary.totalSales > 0 ? Math.min(100, Math.max(0, (summary.netMargin / summary.totalSales) * 100)) : 0;
+  
+  if (marginBar) {
+    marginBar.style.width = `${marginPct}%`;
+  }
+
   if (summary.netMargin >= 0) {
-    marginPill.textContent = 'Net Profit';
+    marginPill.textContent = `Net Profit (${marginPct.toFixed(1)}%)`;
     marginPill.className = 'pill text-green';
   } else {
-    marginPill.textContent = 'Net Loss';
+    marginPill.textContent = `Net Loss (${marginPct.toFixed(1)}%)`;
     marginPill.className = 'pill text-red';
   }
 
@@ -1694,3 +1730,103 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
     alert('Failed to update product details.');
   }
 });
+
+// REFRESH CUSTOMER ACTIVE ORDERS (TRACKER)
+async function refreshCustomerOrders() {
+  const container = document.getElementById('customerDashboardArea');
+  const list = document.getElementById('customerActiveOrdersList');
+  if (!container || !list) return;
+
+  if (!state.currentUser) {
+    container.style.display = 'none';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/orders');
+    const orders = await res.json();
+    
+    // Filter for current logged-in customer's orders
+    const myOrders = orders.filter(o => o.user && o.user.username === state.currentUser.username);
+    
+    // Filter for active orders (pending_payment, paid, or preparing). Completed orders can be listed or hidden. Let's show active ones!
+    const activeOrders = myOrders.filter(o => o.status !== 'completed');
+
+    if (activeOrders.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    list.innerHTML = '';
+
+    activeOrders.forEach(order => {
+      // Calculate active step index:
+      const isPaid = order.status === 'paid_processing' || order.status === 'paid' || order.status === 'completed';
+      
+      const hasGrocery = order.items.some(item => {
+        const prod = state.products.find(p => p.id === item.productId);
+        return prod && (prod.categoryId === 1 || prod.categoryId === 2);
+      });
+      const hasCoffee = order.items.some(item => {
+        const prod = state.products.find(p => p.id === item.productId);
+        return prod && prod.categoryId === 3;
+      });
+      
+      const groceryOk = !hasGrocery || order.splitStatus.warehouse === 'completed';
+      const coffeeOk = !hasCoffee || order.splitStatus.barista === 'completed';
+      const isPacked = groceryOk && coffeeOk;
+
+      const itemsStr = order.items.map(i => `${i.name} (x${i.qty})`).join(', ');
+
+      // Stage description
+      let stageText = 'Order Placed';
+      if (order.status === 'pending_payment') {
+        stageText = 'Awaiting Gateway Payment...';
+      } else if (isPaid && !isPacked) {
+        stageText = 'Fulfillment center: picking & packaging items';
+      } else if (isPacked && order.status !== 'completed') {
+        stageText = 'Fulfillment complete! Dispatched to Rider';
+      }
+
+      const card = document.createElement('div');
+      card.className = 'active-order-track-card';
+      card.innerHTML = `
+        <div class="track-card-header">
+          <div>
+            <strong>Order ID: <span style="font-family: monospace; color: #f57224;">${order.id}</span></strong>
+            <span class="track-time">${new Date(order.date).toLocaleTimeString()}</span>
+          </div>
+          <span class="track-total">NPR ${order.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="track-items-list">📦 <strong>Items:</strong> ${itemsStr}</div>
+        <div class="track-status-alert">🔔 <strong>Current State:</strong> ${stageText}</div>
+        
+        <div class="timeline-stepper">
+          <div class="step done">
+            <div class="circle">✓</div>
+            <div class="label">Ordered</div>
+          </div>
+          <div class="step-line ${isPaid ? 'done' : ''}"></div>
+          <div class="step ${isPaid ? 'done' : (order.status === 'pending_payment' ? 'active' : '')}">
+            <div class="circle">${isPaid ? '✓' : '💳'}</div>
+            <div class="label">Paid</div>
+          </div>
+          <div class="step-line ${isPacked ? 'done' : ''}"></div>
+          <div class="step ${isPacked ? 'done' : (isPaid ? 'active' : '')}">
+            <div class="circle">${isPacked ? '✓' : '📦'}</div>
+            <div class="label">Packed</div>
+          </div>
+          <div class="step-line ${order.status === 'completed' ? 'done' : ''}"></div>
+          <div class="step ${order.status === 'completed' ? 'done' : (isPacked ? 'active' : '')}">
+            <div class="circle">🏍️</div>
+            <div class="label">With Rider</div>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Failed to load active orders tracker:', err);
+  }
+}
