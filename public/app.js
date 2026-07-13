@@ -27,9 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   startCarouselAutoPlay();
   startFlashSaleCountdown();
-  
-  // Poll logs for the audit console
-  setInterval(fetchLogs, 2000);
 });
 
 async function initApp() {
@@ -37,7 +34,6 @@ async function initApp() {
   await fetchSubcategories();
   await fetchProducts();
   await fetchOrders();
-  fetchLogs();
 
   // Check URL parameters for payment notifications
   const urlParams = new URLSearchParams(window.location.search);
@@ -143,11 +139,6 @@ function toggleConsole() {
     consolePanel.classList.add('collapsed');
     arrow.textContent = '▲';
   }
-}
-
-function clearVisualConsole() {
-  const body = document.getElementById('auditConsoleBody');
-  if (body) body.innerHTML = '';
 }
 
 // ==========================================================================
@@ -393,12 +384,6 @@ async function fetchProducts() {
 async function fetchOrders() {
   const res = await fetch('/api/orders');
   state.orders = await res.json();
-}
-
-async function fetchLogs() {
-  const res = await fetch('/api/logs');
-  state.logs = await res.json();
-  renderLogsConsole();
 }
 
 // ==========================================
@@ -1506,33 +1491,6 @@ async function completeDelivery(orderId, needsAgeCheck) {
   } catch (err) {
     console.error(err);
   }
-}
-
-// ==========================================
-// REAL-TIME SECURITY AUDIT CONSOLE DISPLAY
-// ==========================================
-function renderLogsConsole() {
-  const body = document.getElementById('auditConsoleBody');
-  if (!body) return;
-  body.innerHTML = '';
-
-  state.logs.forEach(log => {
-    const timeStr = new Date(log.timestamp).toLocaleTimeString();
-    
-    const line = document.createElement('div');
-    line.className = `console-log-line ${log.level}`;
-    
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'console-time';
-    timeSpan.textContent = `[${timeStr}]`;
-    
-    const textSpan = document.createElement('span');
-    textSpan.innerHTML = `<strong>${log.event}:</strong> ${log.details}`;
-    
-    line.appendChild(timeSpan);
-    line.appendChild(textSpan);
-    body.appendChild(line);
-  });
 }
 
 // ==========================================
