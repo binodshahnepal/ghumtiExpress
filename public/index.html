@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghumti Express - Nepal's Premium Delivery E-Commerce</title>
+  <!-- Google Fonts: Inter and Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- E-COMMERCE MAIN HEADER (Daraz/Amazon Style) -->
+  <header class="ecommerce-header">
+
+    <!-- Main Navigation Bar -->
+    <div class="main-nav-bar">
+      <div class="nav-container">
+        <!-- Logo -->
+        <div class="logo-area" onclick="filterCategory('all')">
+          <img src="/logo.png" alt="Ghumti Express Logo" class="logo-img">
+          <div class="logo-text">
+            <h1>Ghumti Express</h1>
+            <p>Liquor, Groceries & Specialty Coffee</p>
+          </div>
+        </div>
+
+        <!-- E-commerce Search Bar -->
+        <div class="search-bar-container">
+          <span class="search-icon-inside">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search from thousands of items (whiskey, cold drinks, snacks, fresh coffee...)">
+        </div>
+
+        <!-- Profile & Cart Actions -->
+        <div class="nav-actions">
+          <div class="user-profile-badge" id="headerProfileBadge">
+            <span class="user-avatar">👤</span>
+            <span id="headerUserName">Guest Mode</span>
+            <button class="login-header-btn" id="loginHeaderBtn" onclick="openOnboardingModal()">Sign In</button>
+            <button class="logout-btn" id="logoutBtn" style="display:none;">Sign Out</button>
+          </div>
+
+          <button class="cart-toggle-btn" id="cartToggleBtn">
+            <span class="cart-icon">🛒</span>
+            <span class="cart-label">Cart</span>
+            <span id="cartCountBadge" class="count-badge">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amazon-style Sub-navigation Bar -->
+    <div class="category-menu-bar">
+      <div class="nav-container">
+        <nav class="nav-links">
+          <a href="#" class="nav-item active" id="menuAll" onclick="filterCategory('all')">All Categories</a>
+          <a href="#" class="nav-item" id="menuLiquor" onclick="filterCategory(1)">Fine Spirits & Liquors</a>
+          <a href="#" class="nav-item" id="menuGroceries" onclick="filterCategory(2)">Daily Groceries & Essentials</a>
+          <a href="#" class="nav-item" id="menuCoffee" onclick="filterCategory(3)">Himalayan Specialty Coffee</a>
+          <a href="#" class="nav-item flash-sales-link" id="menuFlash" onclick="filterFlashSales()">⚡ Flash Sales & Discounts</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ==============================================
+         CUSTOMER VIEW: STORE LANDING PAGE (Amazon/Daraz Style)
+         ============================================== -->
+    <section id="customerViewSection" class="view-panel active">
+      
+      <!-- HERO BANNER CAROUSEL -->
+      <div class="hero-carousel-container" id="heroCarousel">
+        <!-- Slide 1: Specialty Coffee -->
+        <div class="carousel-slide active" style="background: linear-gradient(135deg, #2b1f1d 0%, #a16207 100%);">
+          <div class="slide-content">
+            <span class="badge-flash">SPECIALTY DEALS</span>
+            <h2>Himalayan Arabica Beans</h2>
+            <p>100% Organic, handpicked arabica beans roasted locally in Lalitpur. Experience rich aroma delivered to your doorstep in 45 minutes.</p>
+            <div class="price-action-row">
+              <span class="discount-tag">Save 15% Today</span>
+              <button class="btn-primary" onclick="filterCategory(3)">Shop Coffee</button>
+            </div>
+          </div>
+          <div class="slide-vector">
+            <svg viewBox="0 0 100 100" width="160" height="160">
+              <path d="M20,40 C20,30 30,20 50,20 C70,20 80,30 80,40 L80,70 C80,80 70,90 50,90 C30,90 20,80 20,70 Z" fill="#4a2c11" />
+              <path d="M80,40 L90,40 C95,40 95,55 90,55 L80,55" fill="none" stroke="#4a2c11" stroke-width="6" stroke-linecap="round" />
+              <ellipse cx="50" cy="20" rx="30" ry="10" fill="#6f4e37" />
+              <path d="M50,90 L50,95 M30,90 L25,93 M70,90 L75,93" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Slide 2: Daily Groceries -->
+        <div class="carousel-slide" style="background: linear-gradient(135deg, #13251f 0%, #059669 100%);">
+          <div class="slide-content">
+            <span class="badge-flash">DAILY GROCERY</span>
+            <h2>Fresh Warehouse Pantry</h2>
+            <p>Direct supply of fresh dairy, cold milk, hot spices, and noodles. Skip the store queues with immediate express warehouse pickings.</p>
+            <div class="price-action-row">
+              <span class="discount-tag">Flat Delivery: NPR 150</span>
+              <button class="btn-primary" onclick="filterCategory(2)">Shop Groceries</button>
+            </div>
+          </div>
+          <div class="slide-vector">
+            <svg viewBox="0 0 100 100" width="160" height="160">
+              <rect x="25" y="30" width="50" height="60" rx="4" fill="#d2b48c" />
+              <path d="M35,30 L35,15 C35,10 42,10 42,15 L42,30" fill="none" stroke="#8b4513" stroke-width="4" />
+              <path d="M65,30 L65,15 C65,10 58,10 58,15 L58,30" fill="none" stroke="#8b4513" stroke-width="4" />
+              <circle cx="40" cy="50" r="8" fill="#e11d48" />
+              <path d="M38,44 Q40,38 45,43" stroke="#22c55e" stroke-width="3" fill="none" />
+              <rect x="52" y="45" width="14" height="25" fill="#38bdf8" rx="2" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Slide 3: Fine Liquor -->
+        <div class="carousel-slide" style="background: linear-gradient(135deg, #1e152a 0%, #7c3aed 100%);">
+          <div class="slide-content">
+            <span class="badge-flash">PREMIUM SPIRITS</span>
+            <h2>Fine Cellar & Rum</h2>
+            <p>Award-winning single malt whiskeys and dark rums. Enforces NRB compliance. Step-by-step driver age check upon doorstep handoff.</p>
+            <div class="price-action-row">
+              <span class="discount-tag">Age Verified (18+)</span>
+              <button class="btn-primary" onclick="filterCategory(1)">Explore Cellar</button>
+            </div>
+          </div>
+          <div class="slide-vector">
+            <svg viewBox="0 0 100 100" width="160" height="160">
+              <path d="M42,20 C42,15 45,10 50,10 C55,10 58,15 58,20 L58,35 L68,45 L68,85 C68,90 62,95 50,95 C38,95 32,90 32,85 L32,45 L42,35 Z" fill="#b45309" />
+              <rect x="36" y="55" width="28" height="20" fill="#fef08a" rx="1" />
+              <rect x="46" y="10" width="8" height="5" fill="#1e293b" />
+              <ellipse cx="50" cy="78" rx="10" ry="12" fill="none" stroke="#000" stroke-width="1.5" />
+            </svg>
+          </div>
+        </div>
+        
+        <!-- Dot Indicators -->
+        <div class="carousel-dots" id="carouselDots">
+          <span class="dot active" onclick="setCarouselSlide(0)"></span>
+          <span class="dot" onclick="setCarouselSlide(1)"></span>
+          <span class="dot" onclick="setCarouselSlide(2)"></span>
+        </div>
+      </div>
+
+      <!-- CATEGORY SHOWCASE OVERLAY GRID -->
+      <div class="departments-quick-grid">
+        <!-- Card 1: Spirits -->
+        <div class="dept-card" onclick="filterCategory(1)">
+          <h3>Spirits Cellar</h3>
+          <div class="dept-image-preview liquor-gradient">
+            <span>🥃</span>
+          </div>
+          <span class="dept-link">Shop Premium Whiskeys & Rum</span>
+        </div>
+        
+        <!-- Card 2: Groceries -->
+        <div class="dept-card" onclick="filterCategory(2)">
+          <h3>Pantry Staples</h3>
+          <div class="dept-image-preview grocery-gradient">
+            <span>🍎</span>
+          </div>
+          <span class="dept-link">Order Dairy & Instant Bites</span>
+        </div>
+        
+        <!-- Card 3: Coffee -->
+        <div class="dept-card" onclick="filterCategory(3)">
+          <h3>Barista Hub</h3>
+          <div class="dept-image-preview coffee-gradient">
+            <span>☕</span>
+          </div>
+          <span class="dept-link">Himalayan Roast Coffee Beans</span>
+        </div>
+        
+        <!-- Card 4: Flash Deals -->
+        <div class="dept-card" onclick="filterFlashSales()">
+          <h3>Hot Deals</h3>
+          <div class="dept-image-preview discount-gradient">
+            <span>⚡</span>
+          </div>
+          <span class="dept-link font-red">Save Up to 25% Off</span>
+        </div>
+      </div>
+
+      <!-- PRODUCTS SECTION GRID (LIGHT THEME) -->
+      <div class="storefront-body-container">
+        <!-- Weekly Catalog Section Divider -->
+        <div class="section-divider">
+          <h2 id="catalogSectionTitle">Weekly Featured Catalog</h2>
+          <div class="catalog-sub-filters" id="categoryFilters">
+            <!-- Dynamic Category Buttons Populated Here -->
+          </div>
+        </div>
+
+        <!-- Catalog Grid -->
+        <div class="products-grid" id="productsGrid">
+          <!-- Products dynamically loaded -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         ADMIN VIEW: CATALOG CONFIGURATION
+         ============================================== -->
+    <section id="adminViewSection" class="view-panel" style="display:none;">
+      <div class="dashboard-grid">
+        <!-- Category/Subcategory Setup Form -->
+        <div class="dashboard-card">
+          <h2>Create Category & Subcategory</h2>
+          
+          <div class="form-section">
+            <h3>Add Category</h3>
+            <form id="addCategoryForm">
+              <div class="form-group">
+                <label for="categoryName">Category Name</label>
+                <input type="text" id="categoryName" placeholder="e.g. Beverages" required>
+              </div>
+              <button type="submit" class="btn-secondary">Save Category</button>
+            </form>
+          </div>
+
+          <div class="form-section border-top">
+            <h3>Add Subcategory</h3>
+            <form id="addSubcategoryForm">
+              <div class="form-group">
+                <label for="subcategoryParent">Parent Category</label>
+                <select id="subcategoryParent" required>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="subcategoryName">Subcategory Name</label>
+                <input type="text" id="subcategoryName" placeholder="e.g. Craft Beer" required>
+              </div>
+              <button type="submit" class="btn-secondary">Save Subcategory</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Product Upload Form with Image File -->
+        <div class="dashboard-card">
+          <h2>Upload Product Item</h2>
+          <form id="addProductForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="productName">Product Name</label>
+              <input type="text" id="productName" placeholder="Yeti Old Durbar Whiskey (750ml)" required>
+            </div>
+            
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label for="productCategory">Category</label>
+                <select id="productCategory" required>
+                  <!-- Populated -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="productSubcategory">Subcategory</label>
+                <select id="productSubcategory" required>
+                  <!-- Populated -->
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label for="productPrice">Price in NPR</label>
+                <input type="number" id="productPrice" placeholder="3200" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="productStock">Initial Stock</label>
+                <input type="number" id="productStock" placeholder="20" min="0" required>
+              </div>
+            </div>
+
+            <div class="form-group check-inline">
+              <input type="checkbox" id="productAgeRestricted">
+              <label for="productAgeRestricted">⚠️ Check if age-restricted item (Requires legal age 18+ to buy)</label>
+            </div>
+
+            <div class="form-group">
+              <label for="productImage">Upload Product Image</label>
+              <div class="file-drop-area">
+                <input type="file" id="productImage" name="image" accept="image/*">
+                <span class="file-message">Click to select files (or leave blank for custom category gradient)</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full">Upload New Product</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         SUPER ADMIN VIEW: FINANCIALS & AUDITS
+         ============================================== -->
+    <section id="superadminViewSection" class="view-panel" style="display:none;">
+      <!-- Key Statistics Dashboard -->
+      <div class="kpi-grid">
+        <div class="kpi-card sales">
+          <h3>Total Sales Revenue</h3>
+          <p class="value" id="kpiSales">NPR 0.00</p>
+          <span class="pill">B2C Customers</span>
+        </div>
+        <div class="kpi-card purchases">
+          <h3>Restocking Expense</h3>
+          <p class="value" id="kpiPurchases">NPR 0.00</p>
+          <span class="pill">B2B Supplies</span>
+        </div>
+        <div class="kpi-card margin">
+          <h3>Net Operating Margin</h3>
+          <p class="value" id="kpiMargin">NPR 0.00</p>
+          <span class="pill" id="kpiMarginPill">Gross Margin</span>
+        </div>
+        <div class="kpi-card orders">
+          <h3>Orders Placed</h3>
+          <p class="value" id="kpiOrders">0</p>
+          <span class="pill">Total Count</span>
+        </div>
+      </div>
+
+      <div class="dashboard-grid gap-large">
+        <!-- Log B2B supply Purchase orders -->
+        <div class="dashboard-card">
+          <h2>B2B Supply procurement (Restocking)</h2>
+          <form id="restockForm">
+            <div class="form-group">
+              <label for="restockProduct">Select Product</label>
+              <select id="restockProduct" required>
+                <!-- Populated -->
+              </select>
+            </div>
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label for="restockSupplier">Supplier Name</label>
+                <input type="text" id="restockSupplier" placeholder="e.g. Yeti Distillery" required>
+              </div>
+              <div class="form-group">
+                <label for="restockQty">Quantity</label>
+                <input type="number" id="restockQty" placeholder="10" min="1" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="restockCost">Total Procurement Cost (NPR)</label>
+              <input type="number" id="restockCost" placeholder="25000" min="0" required>
+            </div>
+            <button type="submit" class="btn-primary w-full">Procure Supplies</button>
+          </form>
+
+          <div class="table-container border-top mt-large">
+            <h3>Recent B2B Procurement Orders</h3>
+            <table class="data-table" id="purchasesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Product</th>
+                  <th>Supplier</th>
+                  <th>Qty</th>
+                  <th>Cost (NPR)</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Transactions history -->
+        <div class="dashboard-card">
+          <h2>All Customer Payment Transactions</h2>
+          <div class="table-container">
+            <table class="data-table" id="transactionsTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Gateway</th>
+                  <th>Txn UUID</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         OPERATIONS & DELIVERY DASHBOARD
+         ============================================== -->
+    <section id="operationsViewSection" class="view-panel" style="display:none;">
+      <div class="dashboard-grid gap-large">
+        
+        <!-- Splitted Logistics Terminal -->
+        <div class="dashboard-card">
+          <h2>Logistics Split Terminal</h2>
+          <p class="description">Upon payment validation, order tickets are splitted based on product sector.</p>
+          
+          <div class="ops-splits-grid">
+            <!-- Warehouse Picking Queue -->
+            <div class="ops-split-box">
+              <h3>📦 Ambient & Chilled Grocery Picking</h3>
+              <div id="warehouseQueueList" class="queue-list">
+                <!-- Grocery Pickings dynamic -->
+              </div>
+            </div>
+
+            <!-- Barista Coffee Station -->
+            <div class="ops-split-box">
+              <h3>☕ Barista Queue</h3>
+              <div id="baristaQueueList" class="queue-list">
+                <!-- Barista queues dynamic -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Driver / Rider Delivery Screen -->
+        <div class="dashboard-card">
+          <h2>🏍️ Rider Handoff & Doorstep Verification</h2>
+          <div class="rider-active-delivery" id="riderDeliveryArea">
+            <p class="empty-msg">No active delivery assignments. Mark an order as paid in store to dispatch to riders.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==============================================
+       ONBOARDING MODAL (SIGN IN / SIGN UP) - POPUP OVERLAY
+       ============================================== -->
+  <div class="modal-overlay" id="onboardingModalOverlay">
+    <div class="onboarding-modal dashboard-card">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-display); font-weight: 700; color: white;">Customer Account</h2>
+        <button class="close-modal" id="closeOnboardingBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs-header">
+          <button class="tab-btn active" id="tabLoginBtn">Sign In</button>
+          <button class="tab-btn" id="tabSignupBtn">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginFormContainer" class="auth-form active">
+          <h2>Welcome Back</h2>
+          <p>Sign in to order liquor, groceries, and coffee</p>
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="loginEmail">Email Address</label>
+              <input type="email" id="loginEmail" placeholder="customer@gmail.com" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary w-full">Sign In</button>
+          </form>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupFormContainer" class="auth-form">
+          <h2>Create Account</h2>
+          <p>Date of birth is verified for liquor age locks</p>
+          <form id="signupForm">
+            <div class="form-group">
+              <label for="signupName">Full Name</label>
+              <input type="text" id="signupName" placeholder="Hari Bahadur" required>
+            </div>
+            <div class="form-group">
+              <label for="signupEmail">Email Address</label>
+              <input type="email" id="signupEmail" placeholder="customer@gmail.com" required>
+            </div>
+            <div class="form-group">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" placeholder="Min. 8 characters" required>
+            </div>
+            <div class="form-group">
+              <label for="signupDob">Date of Birth</label>
+              <input type="date" id="signupDob" required>
+              <small class="helper-text">You must be at least 18 years old to order alcohol products.</small>
+            </div>
+            <button type="submit" class="btn-primary w-full">Create Account</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- E-COMMERCE FOOTER (Amazon/Daraz Multi-column Style) -->
+  <footer class="ecommerce-footer">
+    <div class="footer-container">
+      <div class="footer-columns">
+        <div class="footer-col">
+          <h3>Ghumti Express</h3>
+          <p class="about-text">Nepal's premium quick-commerce aggregator hubs delivering spirits, daily essentials, and café brews right to your doorstep in 45 minutes.</p>
+          <p class="nrb-tag">Authorized under Nepal Rastra Bank payment regulations.</p>
+        </div>
+        <div class="footer-col">
+          <h3>Departments</h3>
+          <ul>
+            <li><a href="#" onclick="filterCategory(1)">Cellar Spirits & Liquors</a></li>
+            <li><a href="#" onclick="filterCategory(2)">Daily Groceries & Staples</a></li>
+            <li><a href="#" onclick="filterCategory(3)">Himalayan Fresh Coffee</a></li>
+            <li><a href="#" onclick="filterFlashSales()">Discounted Deals</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Integrator Sandboxes</h3>
+          <ul>
+            <li><a href="#esewa" onclick="state.currentRole='operations'; switchView('operations');">eSewa Callback Sim</a></li>
+            <li><a href="#khalti" onclick="state.currentRole='operations'; switchView('operations');">Khalti Verification Sim</a></li>
+            <li><a href="#superadmin" onclick="state.currentRole='superadmin'; switchView('superadmin');">Super Admin Terminal</a></li>
+            <li><a href="#admin" onclick="state.currentRole='admin'; switchView('admin');">Upload Product Catalog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h3>Payment Methods Supported</h3>
+          <div class="payment-logos">
+            <span class="pay-badge esewa">eSewa v2</span>
+            <span class="pay-badge khalti">Khalti V2</span>
+            <span class="pay-badge cips">connectIPS</span>
+            <span class="pay-badge fone">Fonepay</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ghumti Express Private Limited. All Rights Reserved. Kathmandu, Nepal.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==============================================
+       SHOPPING CART DRAWER (SLIDE-OUT)
+       ============================================== -->
+  <div class="cart-drawer-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-header">
+      <h2>Your Shopping Cart</h2>
+      <button class="close-drawer" id="closeCartBtn">✕</button>
+    </div>
+    
+    <div class="drawer-body" id="cartDrawerBody">
+      <!-- Cart items -->
+      <div class="cart-items-list" id="cartItemsList">
+        <!-- Dyn -->
+      </div>
+      
+      <!-- Cart Summary & Checkout -->
+      <div class="cart-summary-block">
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span id="cartSubtotal">NPR 0.00</span>
+        </div>
+        <div class="summary-line">
+          <span>13% VAT</span>
+          <span id="cartTax">NPR 0.00</span>
+        </div>
+        <div class="summary-line">
+          <span>Delivery Fee</span>
+          <span id="cartDelivery">NPR 0.00</span>
+        </div>
+        <div class="summary-line total">
+          <span>Total</span>
+          <span id="cartTotal">NPR 0.00</span>
+        </div>
+        <button class="btn-primary w-full mt-large" id="checkoutBtn" disabled>Proceed to Pay</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==============================================
+       GATEWAY SELECTION MODAL
+       ============================================== -->
+  <div class="modal-overlay" id="checkoutModalOverlay">
+    <div class="checkout-modal">
+      <div class="modal-header">
+        <h2>Choose Payment Gateway</h2>
+        <button class="close-modal" id="closeCheckoutModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Review total: <strong id="checkoutTotalText">NPR 0.00</strong></p>
+        <p class="restricted-warning" id="checkoutAgeWarning" style="display:none;">
+          ⚠️ <strong>Contains Alcohol:</strong> Official government photo identification must be presented to the rider upon delivery.
+        </p>
+
+        <div class="gateway-options">
+          <!-- eSewa V2 -->
+          <button class="gateway-btn esewa-btn" id="payEsewaBtn">
+            <span class="gateway-logo">eSewa</span>
+            <span class="gateway-desc">HMAC-SHA256 Signed Form Redirect</span>
+          </button>
+          
+          <!-- Khalti V2 -->
+          <button class="gateway-btn khalti-btn" id="payKhaltiBtn">
+            <span class="gateway-logo">Khalti</span>
+            <span class="gateway-desc">API Initiated Webview Gateway</span>
+          </button>
+
+          <!-- ConnectIPS -->
+          <button class="gateway-btn connectips-btn" id="payConnectIpsBtn">
+            <span class="gateway-logo">connectIPS</span>
+            <span class="gateway-desc">Interbank Mobile Aggregator</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       MOCK GATEWAYS SIMULATOR FRAME
+       ============================================== -->
+  <div class="modal-overlay" id="gatewaySimulatorOverlay">
+    <!-- eSewa Simulator -->
+    <div class="simulator-card esewa" id="esewaSimulator">
+      <div class="sim-header">
+        <span class="sim-brand">eSewa ePay v2 Portal</span>
+        <span class="sim-mode">UAT (Sandbox Mode)</span>
+      </div>
+      <div class="sim-body">
+        <div class="sim-detail-row">
+          <span>Merchant Name:</span>
+          <strong>GHUMTI EXPRESS CORP</strong>
+        </div>
+        <div class="sim-detail-row">
+          <span>Transaction UUID:</span>
+          <span id="esewaSimUuid">ORD-XXX</span>
+        </div>
+        <div class="sim-detail-row">
+          <span>Amount:</span>
+          <strong id="esewaSimAmount" class="text-green">NPR 0.00</strong>
+        </div>
+        
+        <div class="tamper-box border-top">
+          <h4>💡 Client-Side Price Tampering Simulation</h4>
+          <p>Alter the total amount sent to eSewa to test the backend's anti-tamper signature checks.</p>
+          <div class="form-group check-inline">
+            <input type="checkbox" id="tamperEsewaPrice">
+            <label for="tamperEsewaPrice" class="text-red"><strong>Modify amount to NPR 1.00</strong></label>
+          </div>
+        </div>
+
+        <div class="form-group mt-large">
+          <label>Username / Mobile Number</label>
+          <input type="text" value="9841000000" disabled>
+        </div>
+        <div class="form-group">
+          <label>eSewa Wallet PIN</label>
+          <input type="password" value="1234" disabled>
+        </div>
+
+        <button class="btn-primary esewa w-full mt-large" id="simEsewaPayBtn">Authenticate & Complete Payment</button>
+        <button class="btn-cancel w-full" id="simEsewaCancelBtn">Cancel Transaction</button>
+      </div>
+    </div>
+
+    <!-- Khalti Simulator -->
+    <div class="simulator-card khalti" id="khaltiSimulator">
+      <div class="sim-header">
+        <span class="sim-brand">Khalti ePayment Portal</span>
+        <span class="sim-mode">Developer API Sandbox</span>
+      </div>
+      <div class="sim-body">
+        <div class="sim-detail-row">
+          <span>Lookup Key (pidx):</span>
+          <span id="khaltiSimPidx">KH-XXX</span>
+        </div>
+        <div class="sim-detail-row">
+          <span>Total Amount:</span>
+          <strong id="khaltiSimAmount" class="text-purple">NPR 0.00</strong>
+        </div>
+
+        <div class="tamper-box border-top">
+          <h4>💡 Client-Side Status Spoofing Simulation</h4>
+          <p>Simulate when an attacker cancels but claims success in the callback.</p>
+          <div class="form-group">
+            <label>Callback Status Parameter Override:</label>
+            <select id="khaltiStatusOverride">
+              <option value="Completed" selected>Completed (Normal SUCCESS)</option>
+              <option value="User canceled">User canceled (FAIL)</option>
+              <option value="Failed">Failed (FAIL)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group mt-large">
+          <label>Mobile Number</label>
+          <input type="text" value="9801200000" disabled>
+        </div>
+        <div class="form-group">
+          <label>Verification Code (OTP)</label>
+          <input type="text" value="1234" placeholder="Sent via SMS" disabled>
+        </div>
+
+        <button class="btn-primary khalti w-full mt-large" id="simKhaltiPayBtn">Verify & Pay</button>
+        <button class="btn-cancel w-full" id="simKhaltiCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       PRODUCT DETAIL & REVIEWS MODAL
+       ============================================== -->
+  <div class="modal-overlay" id="productDetailModalOverlay">
+    <div class="detail-modal">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">Product Details</h2>
+        <button class="close-modal" id="closeDetailModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-top-grid">
+          <div class="detail-image-box" id="detailModalImage">
+            <!-- image or placeholder -->
+          </div>
+          <div class="detail-desc-box">
+            <p id="detailModalCategory" class="category-tag">Liquor</p>
+            <h3 id="detailModalName" class="product-title-large">Yeti Whiskey</h3>
+            <p class="detail-stock-pill" id="detailModalStock">In Stock: 10</p>
+            <p class="detail-price-text" id="detailModalPrice">NPR 3,400.00</p>
+            <div class="rating-badge-large">
+              <span class="stars" id="detailModalRatingStars">⭐⭐⭐⭐⭐</span>
+              <span id="detailModalRatingText">4.8 (5 reviews)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback section -->
+        <div class="reviews-section mt-large">
+          <h3>Customer Reviews & Ratings</h3>
+          <div class="reviews-list" id="detailReviewsList">
+            <!-- Reviews dynamically loaded -->
+          </div>
+
+          <div class="write-review-box mt-large border-top">
+            <h4>Write a Review</h4>
+            <form id="submitReviewForm">
+              <div class="form-group">
+                <label>Select Stars:</label>
+                <div class="star-rating-selector" id="starSelector">
+                  <span data-star="5">★</span>
+                  <span data-star="4">★</span>
+                  <span data-star="3">★</span>
+                  <span data-star="2">★</span>
+                  <span data-star="1">★</span>
+                </div>
+                <input type="hidden" id="selectedStars" value="5">
+              </div>
+              <div class="form-group">
+                <label for="reviewComment">Your Feedback:</label>
+                <textarea id="reviewComment" rows="3" placeholder="Share your experience with this product..." required></textarea>
+              </div>
+              <button type="submit" class="btn-secondary">Submit Review</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
