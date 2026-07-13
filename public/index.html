@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ghumti Express - Nepal's Premium Delivery E-Commerce</title>
+  <meta name="description" content="Shop groceries, Himalayan coffee and premium spirits from Ghumti Express.">
+  <meta name="theme-color" content="#f57224">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ghumti Express">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <!-- Google Fonts: Inter and Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +45,9 @@
 
         <!-- Profile & Cart Actions -->
         <div class="nav-actions">
+          <button class="install-app-btn" id="installAppBtn" type="button" hidden aria-label="Install Ghumti Express app">
+            <span aria-hidden="true">&#8595;</span> Install App
+          </button>
           <div class="user-profile-badge" id="headerProfileBadge">
             <span class="user-avatar">👤</span>
             <span id="headerUserName">Guest Mode</span>
@@ -941,7 +953,10 @@
       <div class="sweet-alert-icon" id="sweetAlertIcon">✓</div>
       <h3 class="sweet-alert-title" id="sweetAlertTitle">Notification</h3>
       <p class="sweet-alert-message" id="sweetAlertMessage">Details of the action status here.</p>
-      <button class="sweet-alert-btn" id="sweetAlertBtn">OK</button>
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; width: 100%;">
+        <button class="sweet-alert-btn" id="sweetAlertBtn">OK</button>
+        <button class="sweet-alert-btn secondary" id="sweetAlertCancelBtn" style="display: none; background: #64748b;">Cancel</button>
+      </div>
     </div>
   </div>
 

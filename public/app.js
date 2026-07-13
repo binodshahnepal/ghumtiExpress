@@ -27,7 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   startCarouselAutoPlay();
   startFlashSaleCountdown();
+  setupPwa();
 });
+
+let deferredInstallPrompt = null;
+
+function setupPwa() {
+  const installButton = document.getElementById('installAppBtn');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(error => {
+      console.warn('Service worker registration failed:', error);
+    });
+  }
+
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    installButton.hidden = true;
+  }
+
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installButton.hidden = false;
+  });
+
+  installButton.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installButton.hidden = true;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    installButton.hidden = true;
+  });
+}
 
 async function initApp() {
   await fetchCategories();
@@ -1595,9 +1631,14 @@ async function deleteProduct(productId) {
   const prod = state.products.find(p => p.id === productId);
   if (!prod) return;
   
-  if (!confirm(`Are you sure you want to delete '${prod.name}' from the catalog?`)) {
-    return;
-  }
+  const confirmed = await showAlert(
+    'Confirm Delete',
+    `Are you sure you want to remove '${prod.name}' from the product catalog?`,
+    'warning',
+    true
+  );
+
+  if (!confirmed) return;
 
   try {
     const res = await fetch(`/api/products/${productId}`, {
@@ -1605,16 +1646,16 @@ async function deleteProduct(productId) {
     });
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showAlert('Delete Failed', data.error, 'error');
     } else {
-      alert(`Product '${prod.name}' deleted successfully.`);
+      showAlert('Product Deleted', `Product '${prod.name}' has been successfully removed.`, 'success');
       await fetchProducts();
       renderAdminProducts();
       renderProducts(); // refresh customer storefront as well
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to delete product.');
+    showAlert('Delete Error', 'Failed to remove product from catalog.', 'error');
   }
 }
 
@@ -1798,17 +1839,22 @@ async function refreshCustomerOrders() {
 // ==========================================
 // SWEET ALERT MODAL HELPER DEFINITION
 // ==========================================
-function showAlert(title, message, iconType = 'info') {
+function showAlert(title, message, iconType = 'info', showCancel = false) {
   return new Promise((resolve) => {
     const overlay = document.getElementById('sweetAlertOverlay');
     const iconEl = document.getElementById('sweetAlertIcon');
     const titleEl = document.getElementById('sweetAlertTitle');
     const msgEl = document.getElementById('sweetAlertMessage');
     const btnEl = document.getElementById('sweetAlertBtn');
+    const cancelBtnEl = document.getElementById('sweetAlertCancelBtn');
 
     if (!overlay) {
-      alert(`${title}\n${message}`);
-      resolve();
+      if (showCancel) {
+        resolve(confirm(`${title}\n${message}`));
+      } else {
+        alert(`${title}\n${message}`);
+        resolve(true);
+      }
       return;
     }
 
@@ -1827,16 +1873,33 @@ function showAlert(title, message, iconType = 'info') {
     titleEl.textContent = title;
     msgEl.textContent = message;
 
+    if (showCancel) {
+      cancelBtnEl.style.display = 'block';
+      btnEl.textContent = 'Yes';
+    } else {
+      cancelBtnEl.style.display = 'none';
+      btnEl.textContent = 'OK';
+    }
+
     // Open SweetAlert panel
     overlay.classList.add('active');
 
     // Click handler for confirmation
-    const handleClose = () => {
+    const handleConfirm = () => {
       overlay.classList.remove('active');
-      btnEl.removeEventListener('click', handleClose);
-      resolve();
+      btnEl.removeEventListener('click', handleConfirm);
+      cancelBtnEl.removeEventListener('click', handleCancel);
+      resolve(true);
     };
 
-    btnEl.addEventListener('click', handleClose);
+    const handleCancel = () => {
+      overlay.classList.remove('active');
+      btnEl.removeEventListener('click', handleConfirm);
+      cancelBtnEl.removeEventListener('click', handleCancel);
+      resolve(false);
+    };
+
+    btnEl.addEventListener('click', handleConfirm);
+    cancelBtnEl.addEventListener('click', handleCancel);
   });
 }

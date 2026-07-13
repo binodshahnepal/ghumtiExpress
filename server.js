@@ -51,179 +51,154 @@ const upload = multer({
 });
 
 // ==========================================
-// IN-MEMORY DATABASE STRUCTURE (SEEDED DATA)
+// PERSISTENT SQLITE DATABASE INITIALIZATION
 // ==========================================
-const DB_FILE = path.join(__dirname, 'db.json');
+const { DatabaseSync } = require('node:sqlite');
+const db = new DatabaseSync(path.join(__dirname, 'ghumti_express.db'));
 
-function saveDatabase() {
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Failed to save persistent db.json database:', err);
-  }
-}
+// Enable foreign keys
+db.exec('PRAGMA foreign_keys = ON;');
 
-const defaultDb = {
-  users: [
-    {
-      username: 'customer@gmail.com',
-      password: 'password123',
-      fullName: 'Hari Bahadur',
-      dob: '1995-05-15',
-      role: 'customer'
-    },
-    {
-      username: 'admin@gmail.com',
-      password: 'password123',
-      fullName: 'Madan Krishna',
-      dob: '1980-01-10',
-      role: 'admin'
-    },
-    {
-      username: 'superadmin@gmail.com',
-      password: 'password123',
-      fullName: 'Shyam Bahadur',
-      dob: '1975-09-20',
-      role: 'superadmin'
-    },
-    {
-      username: 'rider@gmail.com',
-      password: 'password123',
-      fullName: 'Rider Ram',
-      dob: '1998-03-12',
-      role: 'operations'
-    }
-  ],
-  categories: [
-    { id: 1, name: 'Liquor' },
-    { id: 2, name: 'Groceries' },
-    { id: 3, name: 'Coffee' }
-  ],
-  subcategories: [
-    { id: 1, name: 'Whiskey', categoryId: 1 },
-    { id: 2, name: 'Rum', categoryId: 1 },
-    { id: 3, name: 'Milk & Dairy', categoryId: 2 },
-    { id: 4, name: 'Snacks & Bites', categoryId: 2 },
-    { id: 5, name: 'Fresh Coffee Brews', categoryId: 3 },
-    { id: 6, name: 'Specialty Beans', categoryId: 3 }
-  ],
-  products: [
-    {
-      id: 1,
-      name: 'Yeti Old Durbar Whiskey (750ml)',
-      categoryId: 1,
-      subcategoryId: 1,
-      price: 3400,
-      originalPrice: 3800,
-      costPrice: 2400,
-      mrp: 3800,
-      stock: 10,
-      isAgeRestricted: true,
-      imageUrl: '/placeholder_whiskey.png',
-      averageRating: 4.8,
-      ratingCount: 5
-    },
-    {
-      id: 2,
-      name: 'Khukri Rum (750ml)',
-      categoryId: 1,
-      subcategoryId: 2,
-      price: 2100,
-      originalPrice: 2400,
-      costPrice: 1500,
-      mrp: 2400,
-      stock: 15,
-      isAgeRestricted: true,
-      imageUrl: '/placeholder_rum.png',
-      averageRating: 4.2,
-      ratingCount: 3
-    },
-    {
-      id: 3,
-      name: 'Himalayan Organic Arabica Beans (500g)',
-      categoryId: 3,
-      subcategoryId: 6,
-      price: 1250,
-      originalPrice: 1500,
-      costPrice: 850,
-      mrp: 1500,
-      stock: 20,
-      isAgeRestricted: false,
-      imageUrl: '/placeholder_coffee.png',
-      averageRating: 4.9,
-      ratingCount: 12
-    },
-    {
-      id: 4,
-      name: 'Fresh cow milk (1L)',
-      categoryId: 2,
-      subcategoryId: 3,
-      price: 110,
-      originalPrice: 110,
-      costPrice: 80,
-      mrp: 110,
-      stock: 50,
-      isAgeRestricted: false,
-      imageUrl: '/placeholder_milk.png',
-      averageRating: 4.5,
-      ratingCount: 4
-    },
-    {
-      id: 5,
-      name: 'Current Hot & Spicy Noodles (120g)',
-      categoryId: 2,
-      subcategoryId: 4,
-      price: 60,
-      originalPrice: 75,
-      costPrice: 42,
-      mrp: 75,
-      stock: 80,
-      isAgeRestricted: false,
-      imageUrl: '/placeholder_noodles.png',
-      averageRating: 4.0,
-      ratingCount: 2
-    }
-  ],
-  reviews: [
-    { id: 1, productId: 1, rating: 5, comment: 'Top tier Nepali whiskey, very smooth!', username: 'customer@gmail.com', date: '2026-07-10', isVerifiedBuyer: true },
-    { id: 2, productId: 3, rating: 5, comment: 'Incredible aroma, highly recommended.', username: 'customer@gmail.com', date: '2026-07-11', isVerifiedBuyer: true }
-  ],
-  orders: [],
-  purchases: [
-    { id: 1, productNames: 'Yeti Old Durbar Whiskey (750ml)', supplier: 'Yeti Distillery', quantity: 20, cost: 45000, date: '2026-07-01' },
-    { id: 2, productNames: 'Khukri Rum (750ml)', supplier: 'Nepal Distilleries', quantity: 30, cost: 48000, date: '2026-07-02' }
-  ],
-  logs: [
-    { timestamp: new Date().toISOString(), level: 'info', event: 'System Boot', details: 'Express server initialized with local database seeds.' }
-  ]
-};
+// Initialize tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+  );
+`);
 
-let db;
-if (fs.existsSync(DB_FILE)) {
-  try {
-    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-    console.log('[INFO] Loaded persistent database from db.json');
-  } catch (err) {
-    console.error('[ERROR] Failed parsing db.json, falling back to seeds:', err);
-    db = defaultDb;
-  }
-} else {
-  db = defaultDb;
-  saveDatabase();
-  console.log('[INFO] Persistent database initialized in db.json');
-}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS subcategories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    FOREIGN KEY(categoryId) REFERENCES categories(id) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    subcategoryId INTEGER NOT NULL,
+    price REAL NOT NULL,
+    originalPrice REAL NOT NULL,
+    costPrice REAL NOT NULL,
+    mrp REAL NOT NULL,
+    stock INTEGER NOT NULL,
+    isAgeRestricted INTEGER NOT NULL DEFAULT 0,
+    imageUrl TEXT DEFAULT '',
+    averageRating REAL DEFAULT 0.0,
+    ratingCount INTEGER DEFAULT 0,
+    FOREIGN KEY(categoryId) REFERENCES categories(id),
+    FOREIGN KEY(subcategoryId) REFERENCES subcategories(id)
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    username TEXT PRIMARY KEY,
+    password TEXT NOT NULL,
+    fullName TEXT NOT NULL,
+    dob TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'customer',
+    isGuest INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    productId INTEGER NOT NULL,
+    rating INTEGER NOT NULL,
+    comment TEXT DEFAULT '',
+    username TEXT NOT NULL,
+    date TEXT NOT NULL,
+    isVerifiedBuyer INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(productId) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY(username) REFERENCES users(username) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    subtotal REAL NOT NULL,
+    tax REAL NOT NULL,
+    deliveryFee REAL NOT NULL,
+    totalAmount REAL NOT NULL,
+    username TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending_payment',
+    splitStatusWarehouse TEXT NOT NULL DEFAULT 'pending',
+    splitStatusBarista TEXT NOT NULL DEFAULT 'pending',
+    driverConfirmedAge INTEGER NOT NULL DEFAULT 0,
+    date TEXT NOT NULL,
+    gateway TEXT DEFAULT NULL,
+    FOREIGN KEY(username) REFERENCES users(username)
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orderId TEXT NOT NULL,
+    productId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    price REAL NOT NULL,
+    qty INTEGER NOT NULL,
+    FOREIGN KEY(orderId) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY(productId) REFERENCES products(id)
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS payment_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orderId TEXT NOT NULL,
+    txnUuid TEXT NOT NULL UNIQUE,
+    pidx TEXT DEFAULT NULL,
+    status TEXT NOT NULL DEFAULT 'initiated',
+    gateway TEXT NOT NULL,
+    signature TEXT DEFAULT NULL,
+    FOREIGN KEY(orderId) REFERENCES orders(id) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS purchases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    productNames TEXT NOT NULL,
+    supplier TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    cost REAL NOT NULL,
+    date TEXT NOT NULL
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    level TEXT NOT NULL,
+    event TEXT NOT NULL,
+    details TEXT NOT NULL
+  );
+`);
 
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
 function logEvent(level, event, details) {
   const timestamp = new Date().toISOString();
-  db.logs.unshift({ timestamp, level, event, details });
-  if (db.logs.length > 100) {
-    db.logs = db.logs.slice(0, 100);
+  db.prepare('INSERT INTO logs (timestamp, level, event, details) VALUES (?, ?, ?, ?)').run(timestamp, level, event, details);
+  
+  // Cap logs table to 100 entries to prevent infinite growth
+  const count = db.prepare('SELECT COUNT(*) as count FROM logs').get().count;
+  if (count > 100) {
+    db.prepare('DELETE FROM logs WHERE id IN (SELECT id FROM logs ORDER BY id ASC LIMIT ?)').run(count - 100);
   }
   console.log(`[${level.toUpperCase()}] ${event}: ${details}`);
-  saveDatabase();
 }
 
 function calculateAge(dobString) {
@@ -237,7 +212,6 @@ function calculateAge(dobString) {
   return age;
 }
 
-// Generate unique transaction UUID/Order attempt identifiers
 function generateTransactionUuid(orderId, attemptCount) {
   return `${orderId}-ATT${attemptCount}`;
 }
@@ -265,6 +239,102 @@ function verifyPassword(inputPassword, storedPassword) {
   return inputHash === hash;
 }
 
+// Helper to construct fully structured orders for frontend SPA compatibility
+function getFullOrders() {
+  const orders = db.prepare('SELECT * FROM orders ORDER BY date DESC').all();
+  return orders.map(o => {
+    const items = db.prepare('SELECT productId, name, price, qty FROM order_items WHERE orderId = ?').all();
+    const user = db.prepare('SELECT username, dob FROM users WHERE username = ?').get(o.username);
+    const paymentAttempts = db.prepare('SELECT txnUuid, status, gateway, signature, pidx FROM payment_attempts WHERE orderId = ?').all();
+    return {
+      id: o.id,
+      subtotal: o.subtotal,
+      tax: o.tax,
+      deliveryFee: o.deliveryFee,
+      totalAmount: o.totalAmount,
+      user: user ? { username: user.username, dob: user.dob } : { username: o.username, dob: '' },
+      status: o.status,
+      paymentAttempts: paymentAttempts,
+      splitStatus: {
+        warehouse: o.splitStatusWarehouse,
+        barista: o.splitStatusBarista
+      },
+      driverConfirmedAge: !!o.driverConfirmedAge,
+      date: o.date,
+      gateway: o.gateway
+    };
+  });
+}
+
+// ==========================================
+// DATABASE SEEDING ROUTINE
+// ==========================================
+const catCount = db.prepare('SELECT COUNT(*) as count FROM categories').get().count;
+if (catCount === 0) {
+  // Seed categories
+  db.prepare("INSERT INTO categories (id, name) VALUES (1, 'Liquor')").run();
+  db.prepare("INSERT INTO categories (id, name) VALUES (2, 'Groceries')").run();
+  db.prepare("INSERT INTO categories (id, name) VALUES (3, 'Coffee')").run();
+
+  // Seed subcategories
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (1, 'Whiskey', 1)").run();
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (2, 'Rum', 1)").run();
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (3, 'Milk & Dairy', 2)").run();
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (4, 'Snacks & Bites', 2)").run();
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (5, 'Fresh Coffee Brews', 3)").run();
+  db.prepare("INSERT INTO subcategories (id, name, categoryId) VALUES (6, 'Specialty Beans', 3)").run();
+
+  // Seed users (PBKDF2 secured)
+  db.prepare("INSERT INTO users (username, password, fullName, dob, role) VALUES (?, ?, ?, ?, ?)").run(
+    'customer@gmail.com', hashPassword('password123'), 'Hari Bahadur', '1995-05-15', 'customer'
+  );
+  db.prepare("INSERT INTO users (username, password, fullName, dob, role) VALUES (?, ?, ?, ?, ?)").run(
+    'admin@gmail.com', hashPassword('password123'), 'Madan Krishna', '1980-01-10', 'admin'
+  );
+  db.prepare("INSERT INTO users (username, password, fullName, dob, role) VALUES (?, ?, ?, ?, ?)").run(
+    'superadmin@gmail.com', hashPassword('password123'), 'Shyam Bahadur', '1975-09-20', 'superadmin'
+  );
+  db.prepare("INSERT INTO users (username, password, fullName, dob, role) VALUES (?, ?, ?, ?, ?)").run(
+    'rider@gmail.com', hashPassword('password123'), 'Rider Ram', '1998-03-12', 'operations'
+  );
+
+  // Seed products
+  const seedProducts = [
+    { id: 1, name: 'Yeti Old Durbar Whiskey (750ml)', categoryId: 1, subcategoryId: 1, price: 3400, originalPrice: 3800, costPrice: 2400, mrp: 3800, stock: 10, isAgeRestricted: 1, imageUrl: '/placeholder_whiskey.png' },
+    { id: 2, name: 'Khukri Rum (750ml)', categoryId: 1, subcategoryId: 2, price: 2100, originalPrice: 2400, costPrice: 1500, mrp: 2400, stock: 15, isAgeRestricted: 1, imageUrl: '/placeholder_rum.png' },
+    { id: 3, name: 'Himalayan Organic Arabica Beans (500g)', categoryId: 3, subcategoryId: 6, price: 1250, originalPrice: 1500, costPrice: 850, mrp: 1500, stock: 20, isAgeRestricted: 0, imageUrl: '/placeholder_coffee.png' },
+    { id: 4, name: 'Fresh cow milk (1L)', categoryId: 2, subcategoryId: 3, price: 110, originalPrice: 110, costPrice: 80, mrp: 110, stock: 50, isAgeRestricted: 0, imageUrl: '/placeholder_milk.png' },
+    { id: 5, name: 'Current Hot & Spicy Noodles (120g)', categoryId: 2, subcategoryId: 4, price: 60, originalPrice: 75, costPrice: 42, mrp: 75, stock: 80, isAgeRestricted: 0, imageUrl: '/placeholder_noodles.png' }
+  ];
+  
+  const stmt = db.prepare(`
+    INSERT INTO products (id, name, categoryId, subcategoryId, price, originalPrice, costPrice, mrp, stock, isAgeRestricted, imageUrl)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const p of seedProducts) {
+    stmt.run(p.id, p.name, p.categoryId, p.subcategoryId, p.price, p.originalPrice, p.costPrice, p.mrp, p.stock, p.isAgeRestricted, p.imageUrl);
+  }
+
+  // Seed reviews
+  db.prepare("INSERT INTO reviews (id, productId, rating, comment, username, date, isVerifiedBuyer) VALUES (1, 1, 5, 'Top tier Nepali whiskey, very smooth!', 'customer@gmail.com', '2026-07-10', 1)").run();
+  db.prepare("INSERT INTO reviews (id, productId, rating, comment, username, date, isVerifiedBuyer) VALUES (2, 3, 5, 'Incredible aroma, highly recommended.', 'customer@gmail.com', '2026-07-11', 1)").run();
+
+  // Recompute average ratings
+  const updateAvgStmt = db.prepare(`
+    UPDATE products 
+    SET averageRating = (SELECT IFNULL(round(avg(rating), 1), 0.0) FROM reviews WHERE productId = products.id),
+        ratingCount = (SELECT COUNT(*) FROM reviews WHERE productId = products.id)
+  `);
+  updateAvgStmt.run();
+
+  // Seed purchases
+  db.prepare("INSERT INTO purchases (id, productNames, supplier, quantity, cost, date) VALUES (1, 'Yeti Old Durbar Whiskey (750ml)', 'Yeti Distillery', 20, 45000, '2026-07-01')").run();
+  db.prepare("INSERT INTO purchases (id, productNames, supplier, quantity, cost, date) VALUES (2, 'Khukri Rum (750ml)', 'Nepal Distilleries', 30, 48000, '2026-07-02')").run();
+
+  // Initial log entry
+  db.prepare("INSERT INTO logs (timestamp, level, event, details) VALUES (?, 'info', 'System Boot', 'Express SQLite database initialized with seed values.')").run(new Date().toISOString());
+}
+
 // ==========================================
 // AUTHENTICATION API
 // ==========================================
@@ -274,33 +344,31 @@ app.post('/api/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'All fields (username, password, fullName, dob) are required.' });
   }
 
-  const existing = db.users.find(u => u.username === username);
+  const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
   if (existing) {
     return res.status(400).json({ error: 'User already exists.' });
   }
 
-  const newUser = { 
-    username, 
-    password: hashPassword(password), 
-    fullName, 
-    dob, 
-    role: 'customer' 
-  };
-  db.users.push(newUser);
+  const hashedPassword = hashPassword(password);
+  db.prepare('INSERT INTO users (username, password, fullName, dob, role) VALUES (?, ?, ?, ?, ?)').run(
+    username, hashedPassword, fullName, dob, 'customer'
+  );
+  
   logEvent('info', 'User Signup', `Customer ${username} registered successfully. DOB: ${dob}`);
   res.json({ success: true, user: { username, fullName, dob, role: 'customer' } });
 });
 
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
-  const user = db.users.find(u => u.username === username);
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
   if (!user || !verifyPassword(password, user.password)) {
     return res.status(401).json({ error: 'Invalid username or password.' });
   }
   
-  // Auto-upgrade legacy plain text seed to secure hash on successful login
+  // Auto-upgrade legacy seeds to pbkdf2 hash on successful login
   if (!user.password.startsWith('pbkdf2$')) {
-    user.password = hashPassword(password);
+    const updated = hashPassword(password);
+    db.prepare('UPDATE users SET password = ? WHERE username = ?').run(updated, username);
     logEvent('info', 'Auth Security Upgrade', `Upgraded password storage to secure pbkdf2 for user '${username}'`);
   }
 
@@ -309,52 +377,65 @@ app.post('/api/auth/login', (req, res) => {
 
 app.post('/api/auth/guest', (req, res) => {
   const guestId = 'guest_' + Math.floor(100000 + Math.random() * 900000);
+  db.prepare('INSERT INTO users (username, password, fullName, dob, role, isGuest) VALUES (?, ?, ?, ?, ?, 1)').run(
+    guestId, '', 'Guest User', '2000-01-01', 'customer'
+  );
+  
   const guestUser = {
     username: guestId,
-    password: '',
     fullName: 'Guest User',
     role: 'customer',
-    dob: '2000-01-01', // Default adult age for guest checkout
+    dob: '2000-01-01',
     isGuest: true
   };
-  db.users.push(guestUser);
   logEvent('info', 'Auth Success', `Guest session initialized as '${guestId}'`);
   res.json({ success: true, user: guestUser });
 });
 
 // ==========================================
-// CATALOG MANAGEMENT API
+// CATEGORIES & SUBCATEGORIES MANAGEMENT API
 // ==========================================
 app.get('/api/categories', (req, res) => {
-  res.json(db.categories);
+  const categories = db.prepare('SELECT * FROM categories').all();
+  res.json(categories);
 });
 
 app.post('/api/categories', (req, res) => {
   const { name } = req.body;
-  if (!name) return res.status(400).json({ error: 'Category name required.' });
-  const id = db.categories.length > 0 ? Math.max(...db.categories.map(c => c.id)) + 1 : 1;
-  const newCat = { id, name };
-  db.categories.push(newCat);
-  logEvent('info', 'Category Created', `New category '${name}' (ID: ${id}) added.`);
-  res.json(newCat);
+  if (!name) return res.status(400).json({ error: 'Category name is required.' });
+
+  try {
+    const info = db.prepare('INSERT INTO categories (name) VALUES (?)').run(name);
+    logEvent('info', 'Category Created', `New category '${name}' (ID: ${info.lastInsertRowid}) added.`);
+    res.json({ id: info.lastInsertRowid, name });
+  } catch (err) {
+    res.status(400).json({ error: 'Category already exists.' });
+  }
 });
 
 app.get('/api/subcategories', (req, res) => {
-  res.json(db.subcategories);
+  const subcategories = db.prepare('SELECT * FROM subcategories').all();
+  res.json(subcategories);
 });
 
 app.post('/api/subcategories', (req, res) => {
   const { name, categoryId } = req.body;
-  if (!name || !categoryId) return res.status(400).json({ error: 'Subcategory name and categoryId required.' });
-  const id = db.subcategories.length > 0 ? Math.max(...db.subcategories.map(s => s.id)) + 1 : 1;
-  const newSub = { id, name, categoryId: parseInt(categoryId) };
-  db.subcategories.push(newSub);
+  if (!name || !categoryId) return res.status(400).json({ error: 'Subcategory name and parent Category ID are required.' });
+
+  const info = db.prepare('INSERT INTO subcategories (name, categoryId) VALUES (?, ?)').run(name, parseInt(categoryId));
   logEvent('info', 'Subcategory Created', `New subcategory '${name}' under Category ${categoryId}.`);
-  res.json(newSub);
+  res.json({ id: info.lastInsertRowid, name, categoryId: parseInt(categoryId) });
 });
 
+// ==========================================
+// PRODUCT CATALOG MANAGEMENT API
+// ==========================================
 app.get('/api/products', (req, res) => {
-  res.json(db.products);
+  const products = db.prepare('SELECT * FROM products').all().map(p => ({
+    ...p,
+    isAgeRestricted: !!p.isAgeRestricted
+  }));
+  res.json(products);
 });
 
 app.post('/api/products', upload.single('image'), (req, res) => {
@@ -363,15 +444,29 @@ app.post('/api/products', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'Product name, category, subcategory, price, and stock are required.' });
   }
 
-  const id = db.products.length > 0 ? Math.max(...db.products.map(p => p.id)) + 1 : 1;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
-
   const sellingPrice = parseFloat(price);
   const parsedMRP = mrp ? parseFloat(mrp) : sellingPrice;
   const parsedCost = costPrice ? parseFloat(costPrice) : (sellingPrice * 0.7);
 
+  const info = db.prepare(`
+    INSERT INTO products (name, categoryId, subcategoryId, price, originalPrice, costPrice, mrp, stock, isAgeRestricted, imageUrl)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    name,
+    parseInt(categoryId),
+    parseInt(subcategoryId),
+    sellingPrice,
+    parsedMRP,
+    parsedCost,
+    parsedMRP,
+    parseInt(stock),
+    (isAgeRestricted === 'true' || isAgeRestricted === true) ? 1 : 0,
+    imageUrl
+  );
+
   const newProduct = {
-    id,
+    id: info.lastInsertRowid,
     name,
     categoryId: parseInt(categoryId),
     subcategoryId: parseInt(subcategoryId),
@@ -386,61 +481,75 @@ app.post('/api/products', upload.single('image'), (req, res) => {
     ratingCount: 0
   };
 
-  db.products.push(newProduct);
-  logEvent('info', 'Product Created', `Product '${name}' (ID: ${id}) uploaded by Admin.`);
+  logEvent('info', 'Product Created', `Product '${name}' (ID: ${info.lastInsertRowid}) uploaded by Admin.`);
   res.json(newProduct);
 });
 
-// Edit product details
 app.put('/api/products/:id', upload.single('image'), (req, res) => {
   const productId = parseInt(req.params.id);
   const { name, price, stock, isAgeRestricted, categoryId, subcategoryId, costPrice, mrp } = req.body;
   
-  const product = db.products.find(p => p.id === productId);
+  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
   if (!product) {
     return res.status(404).json({ error: 'Product not found.' });
   }
 
-  if (name) product.name = name;
-  if (price) product.price = parseFloat(price);
-  if (costPrice) product.costPrice = parseFloat(costPrice);
+  const updateFields = [];
+  const params = [];
+
+  if (name) { updateFields.push('name = ?'); params.push(name); }
+  if (price) { updateFields.push('price = ?'); params.push(parseFloat(price)); }
+  if (costPrice) { updateFields.push('costPrice = ?'); params.push(parseFloat(costPrice)); }
   if (mrp) {
-    product.mrp = parseFloat(mrp);
-    product.originalPrice = parseFloat(mrp); // sync for crossed-out deal price display
+    updateFields.push('mrp = ?'); params.push(parseFloat(mrp));
+    updateFields.push('originalPrice = ?'); params.push(parseFloat(mrp));
   }
-  if (stock !== undefined) product.stock = parseInt(stock);
-  if (isAgeRestricted !== undefined) product.isAgeRestricted = isAgeRestricted === 'true' || isAgeRestricted === true;
-  if (categoryId) product.categoryId = parseInt(categoryId);
-  if (subcategoryId) product.subcategoryId = parseInt(subcategoryId);
-
+  if (stock !== undefined) { updateFields.push('stock = ?'); params.push(parseInt(stock)); }
+  if (isAgeRestricted !== undefined) {
+    updateFields.push('isAgeRestricted = ?');
+    params.push((isAgeRestricted === 'true' || isAgeRestricted === true) ? 1 : 0);
+  }
+  if (categoryId) { updateFields.push('categoryId = ?'); params.push(parseInt(categoryId)); }
+  if (subcategoryId) { updateFields.push('subcategoryId = ?'); params.push(parseInt(subcategoryId)); }
+  
   if (req.file) {
-    product.imageUrl = `/uploads/${req.file.filename}`;
+    updateFields.push('imageUrl = ?');
+    params.push(`/uploads/${req.file.filename}`);
   }
 
-  logEvent('info', 'Product Updated', `Product '${product.name}' (ID: ${product.id}) updated by Admin.`);
-  res.json({ success: true, product });
+  if (updateFields.length > 0) {
+    params.push(productId);
+    db.prepare(`UPDATE products SET ${updateFields.join(', ')} WHERE id = ?`).run(...params);
+  }
+
+  const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
+  updatedProduct.isAgeRestricted = !!updatedProduct.isAgeRestricted;
+
+  logEvent('info', 'Product Updated', `Product '${updatedProduct.name}' (ID: ${productId}) updated by Admin.`);
+  res.json({ success: true, product: updatedProduct });
 });
 
-// Delete product
 app.delete('/api/products/:id', (req, res) => {
   const productId = parseInt(req.params.id);
-  const index = db.products.findIndex(p => p.id === productId);
-  if (index === -1) {
+  const product = db.prepare('SELECT name FROM products WHERE id = ?').get(productId);
+  if (!product) {
     return res.status(404).json({ error: 'Product not found.' });
   }
 
-  const name = db.products[index].name;
-  db.products.splice(index, 1);
-  logEvent('info', 'Product Deleted', `Product '${name}' (ID: ${productId}) deleted by Admin.`);
-  res.json({ success: true, message: 'Product deleted successfully.' });
+  db.prepare('DELETE FROM products WHERE id = ?').run(productId);
+  logEvent('info', 'Product Deleted', `Product '${product.name}' (ID: ${productId}) deleted by Admin.`);
+  res.json({ success: true });
 });
 
 // ==========================================
-// RATING & FEEDBACK API
+// FEEDBACK AND REVIEWS API
 // ==========================================
 app.get('/api/products/:id/reviews', (req, res) => {
   const productId = parseInt(req.params.id);
-  const reviews = db.reviews.filter(r => r.productId === productId);
+  const reviews = db.prepare('SELECT * FROM reviews WHERE productId = ?').all().map(r => ({
+    ...r,
+    isVerifiedBuyer: !!r.isVerifiedBuyer
+  }));
   res.json(reviews);
 });
 
@@ -452,39 +561,41 @@ app.post('/api/products/:id/reviews', (req, res) => {
     return res.status(400).json({ error: 'Rating and username are required.' });
   }
 
-  const product = db.products.find(p => p.id === productId);
+  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
   if (!product) {
-    return res.status(404).json({ error: 'Product not found.' });
+    return res.status(404).json({ error: 'Product does not exist.' });
   }
 
-  // Check if verified buyer
-  const isVerifiedBuyer = db.orders.some(order => 
-    order.user.username === username && 
-    (order.status === 'paid_processing' || order.status === 'completed') &&
-    order.items.some(item => item.productId === productId)
+  // Simple auto verification: check if user bought product
+  const completedOrders = getFullOrders().filter(o => o.user.username === username && o.status === 'completed');
+  const isVerifiedBuyer = completedOrders.some(order => order.items.some(item => item.productId === productId));
+
+  db.prepare(`
+    INSERT INTO reviews (productId, rating, comment, username, date, isVerifiedBuyer)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    productId,
+    parseInt(rating),
+    comment || '',
+    username,
+    new Date().toISOString().split('T')[0],
+    isVerifiedBuyer ? 1 : 0
   );
 
-  const reviewId = db.reviews.length > 0 ? Math.max(...db.reviews.map(r => r.id)) + 1 : 1;
-  const newReview = {
-    id: reviewId,
-    productId,
-    rating: parseInt(rating),
-    comment: comment || '',
-    username,
-    date: new Date().toISOString().split('T')[0],
-    isVerifiedBuyer
-  };
+  // Recompute average rating & rating count
+  const allRatings = db.prepare('SELECT rating FROM reviews WHERE productId = ?').all();
+  const ratingCount = allRatings.length;
+  const sum = allRatings.reduce((acc, r) => acc + r.rating, 0);
+  const averageRating = parseFloat((sum / ratingCount).toFixed(1));
 
-  db.reviews.push(newReview);
-
-  // Recompute average rating for product
-  const productReviews = db.reviews.filter(r => r.productId === productId);
-  const sum = productReviews.reduce((acc, r) => acc + r.rating, 0);
-  product.averageRating = parseFloat((sum / productReviews.length).toFixed(1));
-  product.ratingCount = productReviews.length;
+  db.prepare('UPDATE products SET averageRating = ?, ratingCount = ? WHERE id = ?').run(
+    averageRating,
+    ratingCount,
+    productId
+  );
 
   logEvent('info', 'Product Review Submitted', `User ${username} rated Product ${productId} (${rating} stars)`);
-  res.json(newReview);
+  res.json({ success: true });
 });
 
 // ==========================================
@@ -499,20 +610,18 @@ app.post('/api/checkout', (req, res) => {
     return res.status(400).json({ error: 'User must be authenticated to check out.' });
   }
 
-  // Reload user details from db
-  const currentUser = db.users.find(u => u.username === user.username);
+  const currentUser = db.prepare('SELECT * FROM users WHERE username = ?').get(user.username);
   if (!currentUser) {
     return res.status(401).json({ error: 'User record not found.' });
   }
 
   const userAge = calculateAge(currentUser.dob);
-  let totalAmount = 0;
   let subtotal = 0;
   const verifiedItems = [];
   let containsAgeRestricted = false;
 
   for (const cartItem of items) {
-    const product = db.products.find(p => p.id === cartItem.id);
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(cartItem.id);
     if (!product) {
       return res.status(404).json({ error: `Product ID ${cartItem.id} does not exist.` });
     }
@@ -540,13 +649,33 @@ app.post('/api/checkout', (req, res) => {
     });
   }
 
-  // Calculate pricing components
   const tax = parseFloat((subtotal * 0.13).toFixed(2)); // 13% VAT
-  const deliveryFee = 150; // Standard NPR 150 delivery
-  totalAmount = subtotal + tax + deliveryFee;
+  const deliveryFee = 150;
+  const totalAmount = subtotal + tax + deliveryFee;
 
-  // Insert Order in pending state
   const orderId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  
+  db.prepare(`
+    INSERT INTO orders (id, subtotal, tax, deliveryFee, totalAmount, username, status, splitStatusWarehouse, splitStatusBarista, driverConfirmedAge, date)
+    VALUES (?, ?, ?, ?, ?, ?, 'pending_payment', 'pending', 'pending', 0, ?)
+  `).run(
+    orderId,
+    subtotal,
+    tax,
+    deliveryFee,
+    totalAmount,
+    currentUser.username,
+    new Date().toISOString()
+  );
+
+  const insertItemStmt = db.prepare(`
+    INSERT INTO order_items (orderId, productId, name, price, qty)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  for (const item of verifiedItems) {
+    insertItemStmt.run(orderId, item.productId, item.name, item.price, item.qty);
+  }
+
   const newOrder = {
     id: orderId,
     items: verifiedItems,
@@ -569,7 +698,6 @@ app.post('/api/checkout', (req, res) => {
     date: new Date().toISOString()
   };
 
-  db.orders.push(newOrder);
   logEvent('info', 'Checkout Initiated', `Order ${orderId} created for ${currentUser.username}. Total: NPR ${totalAmount}. Age restricted flag: ${containsAgeRestricted}`);
   res.json({ success: true, order: newOrder, containsAgeRestricted });
 });
@@ -577,19 +705,16 @@ app.post('/api/checkout', (req, res) => {
 // ==========================================
 // PAYMENT GATEWAY INTEGRATION ENDPOINTS
 // ==========================================
-
-// eSewa Sandbox Details
 const ESEWA_MERCHANT_CODE = process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
 const ESEWA_SECRET_KEY = process.env.ESEWA_SECRET_KEY || '8g8M8PlwO6153773';
 
-// 1. INITIATE PAYMENT
 app.post('/api/payment/initiate', (req, res) => {
   const { orderId, gateway } = req.body;
   if (!orderId || !gateway) {
     return res.status(400).json({ error: 'Order ID and Gateway are required.' });
   }
 
-  const order = db.orders.find(o => o.id === orderId);
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
   if (!order) {
     return res.status(404).json({ error: 'Order not found.' });
   }
@@ -598,25 +723,22 @@ app.post('/api/payment/initiate', (req, res) => {
     return res.status(400).json({ error: `Order is already in '${order.status}' status.` });
   }
 
-  // Generate unique transaction reference for retry idempotency
-  const attemptCount = order.paymentAttempts.length + 1;
+  const attemptsCount = db.prepare('SELECT COUNT(*) as count FROM payment_attempts WHERE orderId = ?').get(orderId).count;
+  const attemptCount = attemptsCount + 1;
   const transactionUuid = generateTransactionUuid(order.id, attemptCount);
-  order.gateway = gateway;
+  
+  db.prepare('UPDATE orders SET gateway = ? WHERE id = ?').run(gateway, orderId);
 
   if (gateway === 'esewa') {
-    // Generate signature for eSewa
     const message = `total_amount=${order.totalAmount},transaction_uuid=${transactionUuid},product_code=${ESEWA_MERCHANT_CODE}`;
     const hmac = crypto.createHmac('sha256', ESEWA_SECRET_KEY);
     hmac.update(message);
     const signature = hmac.digest('base64');
 
-    const paymentAttempt = {
-      txnUuid: transactionUuid,
-      status: 'initiated',
-      gateway: 'esewa',
-      signature: signature
-    };
-    order.paymentAttempts.push(paymentAttempt);
+    db.prepare(`
+      INSERT INTO payment_attempts (orderId, txnUuid, status, gateway, signature)
+      VALUES (?, ?, 'initiated', 'esewa', ?)
+    `).run(orderId, transactionUuid, signature);
 
     logEvent('info', 'Payment Initiated', `eSewa payload signed for order ${orderId}, txn_uuid: ${transactionUuid}`);
     return res.json({
@@ -638,35 +760,30 @@ app.post('/api/payment/initiate', (req, res) => {
     });
 
   } else if (gateway === 'khalti') {
-    // Khalti initiates with server-to-server request
-    // We will build a simulator logic or make real request if keys exist
-    const paymentAttempt = {
-      txnUuid: transactionUuid,
-      pidx: `KH-${transactionUuid}-${Math.random().toString(36).substr(2, 9)}`,
-      status: 'initiated',
-      gateway: 'khalti'
-    };
-    order.paymentAttempts.push(paymentAttempt);
+    const pidx = `KH-${transactionUuid}-${Math.random().toString(36).substr(2, 9)}`;
+    db.prepare(`
+      INSERT INTO payment_attempts (orderId, txnUuid, pidx, status, gateway)
+      VALUES (?, ?, ?, 'initiated', 'khalti')
+    `).run(orderId, transactionUuid, pidx);
 
-    logEvent('info', 'Payment Initiated', `Khalti pidx session created for order ${orderId}, pidx: ${paymentAttempt.pidx}`);
+    logEvent('info', 'Payment Initiated', `Khalti pidx session created for order ${orderId}, pidx: ${pidx}`);
     return res.json({
       success: true,
       gateway: 'khalti',
       payload: {
-        pidx: paymentAttempt.pidx,
+        pidx,
         amount: Math.round(order.totalAmount * 100), // Paisa
         purchase_order_id: transactionUuid,
         purchase_order_name: `Ghumti Order ${orderId}`,
-        redirect_url: `http://localhost:${PORT}/api/payment/callback/khalti?pidx=${paymentAttempt.pidx}`
+        redirect_url: `http://localhost:${PORT}/api/payment/callback/khalti?pidx=${pidx}`
       }
     });
   } else if (gateway === 'connectips') {
-    const paymentAttempt = {
-      txnUuid: transactionUuid,
-      status: 'initiated',
-      gateway: 'connectips'
-    };
-    order.paymentAttempts.push(paymentAttempt);
+    db.prepare(`
+      INSERT INTO payment_attempts (orderId, txnUuid, status, gateway)
+      VALUES (?, ?, 'initiated', 'connectips')
+    `).run(orderId, transactionUuid);
+
     logEvent('info', 'Payment Initiated', `ConnectIPS transaction session simulated for order ${orderId}`);
     return res.json({
       success: true,
@@ -684,7 +801,6 @@ app.post('/api/payment/initiate', (req, res) => {
   res.status(400).json({ error: 'Unsupported payment gateway.' });
 });
 
-// 2. ESEWA CALLBACK HANDLER
 app.get('/api/payment/callback/esewa', (req, res) => {
   const { data } = req.query;
   if (!data) {
@@ -693,24 +809,20 @@ app.get('/api/payment/callback/esewa', (req, res) => {
   }
 
   try {
-    // Base64 decode
     const decodedString = Buffer.from(data, 'base64').toString('utf-8');
     const callbackData = JSON.parse(decodedString);
 
     logEvent('info', 'eSewa Callback Received', `Raw payload: ${decodedString}`);
 
     const { status, total_amount, transaction_uuid, product_code, signature } = callbackData;
-
-    // Retrieve order
     const orderId = transaction_uuid.split('-ATT')[0];
-    const order = db.orders.find(o => o.id === orderId);
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
 
     if (!order) {
       logEvent('error', 'Anti-Tampering Alert', `Order not found for transaction uuid: ${transaction_uuid}`);
       return res.redirect('/payment-failure?error=order_not_found');
     }
 
-    // Recompute Signature to ensure it matches
     const message = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
     const hmac = crypto.createHmac('sha256', ESEWA_SECRET_KEY);
     hmac.update(message);
@@ -718,40 +830,30 @@ app.get('/api/payment/callback/esewa', (req, res) => {
 
     if (computedSignature !== signature) {
       logEvent('error', 'Anti-Tampering Alert', `HMAC Signature Mismatch! Tampering detected for order ${orderId}. Decoded signature: ${signature}, Computed: ${computedSignature}`);
-      order.status = 'cancelled';
+      db.prepare('UPDATE orders SET status = "cancelled" WHERE id = ?').run(orderId);
       logEvent('info', 'Order Cancelled', `Order ${orderId} cancelled due to signature mismatch verification.`);
       return res.redirect(`/payment-failure?orderId=${orderId}&error=tampering_detected`);
     }
 
-    // Strict value check
     if (parseFloat(total_amount) !== order.totalAmount) {
       logEvent('error', 'Anti-Tampering Alert', `Amount mismatch detected! Gateway reported NPR ${total_amount}, Database has NPR ${order.totalAmount}`);
-      order.status = 'cancelled';
+      db.prepare('UPDATE orders SET status = "cancelled" WHERE id = ?').run(orderId);
       return res.redirect(`/payment-failure?orderId=${orderId}&error=amount_mismatch`);
     }
 
-    // Simulated Server-to-Server transaction status confirmation
-    // Real call: POST https://rc.esewa.com.np/api/epay/transaction/status/
-    logEvent('info', 'Server-to-Server Verification', `Checking status check for ${transaction_uuid} directly with eSewa servers.`);
-
     if (status === 'COMPLETE') {
-      // Deduct Stock
-      for (const item of order.items) {
-        const prod = db.products.find(p => p.id === item.productId);
-        if (prod) {
-          prod.stock = Math.max(0, prod.stock - item.qty);
-          logEvent('info', 'Inventory Deducted', `Stock for product '${prod.name}' updated to ${prod.stock}`);
-        }
+      const items = db.prepare('SELECT productId, qty FROM order_items WHERE orderId = ?').all();
+      for (const item of items) {
+        db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?').run(item.qty, item.productId);
       }
 
-      order.status = 'paid_processing';
-      const attempt = order.paymentAttempts.find(a => a.txnUuid === transaction_uuid);
-      if (attempt) attempt.status = 'completed';
+      db.prepare('UPDATE orders SET status = "paid_processing" WHERE id = ?').run(orderId);
+      db.prepare('UPDATE payment_attempts SET status = "completed" WHERE txnUuid = ?').run(transaction_uuid);
 
       logEvent('info', 'Payment Successful', `Order ${orderId} successfully paid via eSewa. Dispatching fulfillment splitted tickets.`);
       return res.redirect(`/payment-success?orderId=${orderId}`);
     } else {
-      order.status = 'cancelled';
+      db.prepare('UPDATE orders SET status = "cancelled" WHERE id = ?').run(orderId);
       logEvent('warning', 'Payment Failed', `eSewa returned transaction status: ${status} for order ${orderId}`);
       return res.redirect(`/payment-failure?orderId=${orderId}&error=gateway_failed`);
     }
@@ -761,7 +863,6 @@ app.get('/api/payment/callback/esewa', (req, res) => {
   }
 });
 
-// 3. KHALTI CALLBACK HANDLER
 app.get('/api/payment/callback/khalti', (req, res) => {
   const { pidx, transaction_id, status, purchase_order_id } = req.query;
 
@@ -772,159 +873,150 @@ app.get('/api/payment/callback/khalti', (req, res) => {
 
   logEvent('info', 'Khalti Callback Received', `Redirect callback payload for pidx ${pidx}. Query Status: ${status}`);
 
-  // Retrieve Order
-  const orderId = purchase_order_id ? purchase_order_id.split('-ATT')[0] : null;
-  const order = db.orders.find(o => o.paymentAttempts.some(a => a.pidx === pidx) || (orderId && o.id === orderId));
-
-  if (!order) {
-    logEvent('error', 'Anti-Tampering Alert', `Order matching pidx ${pidx} or purchase_order_id ${purchase_order_id} not found.`);
-    return res.redirect('/payment-failure?error=order_not_found');
+  const attempt = db.prepare('SELECT * FROM payment_attempts WHERE pidx = ?').get(pidx);
+  if (!attempt) {
+    logEvent('error', 'Anti-Tampering Alert', `Order matching pidx ${pidx} not found.`);
+    return res.redirect('/payment-failure?error=invalid_pidx');
   }
 
-  const txnUuid = order.paymentAttempts.find(a => a.pidx === pidx)?.txnUuid || purchase_order_id;
+  const orderId = attempt.orderId;
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
 
-  // STRICT SERVER-TO-SERVER VERIFICATION
-  // POST to https://khalti.com/api/v2/epayment/lookup/
   logEvent('info', 'Server-to-Server Verification', `Initiating POST status check verification directly to Khalti API endpoint for pidx: ${pidx}`);
 
-  // Simulation of Server-to-Server Lookup outcome
-  // In a real environment, you would call fetch() with Authorization Header
-  // If user sets dynamic test mode we mock a Completed status or failed status based on status query
   const lookupStatus = status || 'Completed';
 
   if (lookupStatus === 'Completed') {
-    // Check if amount matches
-    // In lookup payload, amount is returned. Let's make sure it matches database total
-    // Deduct stock
-    for (const item of order.items) {
-      const prod = db.products.find(p => p.id === item.productId);
-      if (prod) {
-        prod.stock = Math.max(0, prod.stock - item.qty);
-        logEvent('info', 'Inventory Deducted', `Stock for product '${prod.name}' updated to ${prod.stock}`);
-      }
+    const items = db.prepare('SELECT productId, qty FROM order_items WHERE orderId = ?').all();
+    for (const item of items) {
+      db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?').run(item.qty, item.productId);
     }
 
-    order.status = 'paid_processing';
-    const attempt = order.paymentAttempts.find(a => a.pidx === pidx);
-    if (attempt) attempt.status = 'completed';
+    db.prepare('UPDATE orders SET status = "paid_processing" WHERE id = ?').run(orderId);
+    db.prepare('UPDATE payment_attempts SET status = "completed" WHERE pidx = ?').run(pidx);
 
     logEvent('info', 'Payment Successful', `Order ${order.id} validated as Completed via Khalti direct lookup API. Ticket split triggered.`);
-    return res.redirect(`/payment-success?orderId=${order.id}`);
+    return res.redirect(`/payment-success?orderId=${orderId}`);
   } else {
-    order.status = 'cancelled';
+    db.prepare('UPDATE orders SET status = "cancelled" WHERE id = ?').run(orderId);
     logEvent('warning', 'Payment Failed', `Khalti lookup returned status: ${lookupStatus} for order ${order.id}`);
-    return res.redirect(`/payment-failure?orderId=${order.id}&error=lookup_failed`);
+    return res.redirect(`/payment-failure?orderId=${orderId}&error=lookup_failed`);
   }
 });
 
-// 4. CONNECTIPS SIMULATED CALLBACK
 app.get('/api/payment/callback/connectips', (req, res) => {
-  const { txnId, status } = req.query;
-  const orderId = txnId.split('-ATT')[0];
-  const order = db.orders.find(o => o.id === orderId);
-
-  if (!order) {
-    return res.redirect('/payment-failure?error=order_not_found');
+  const { txnId } = req.query;
+  if (!txnId) {
+    return res.redirect('/payment-failure?error=missing_txnid');
   }
 
   logEvent('info', 'ConnectIPS Callback', `Direct callback lookup for ConnectIPS ticket ${txnId}`);
 
-  if (status === 'SUCCESS') {
-    for (const item of order.items) {
-      const prod = db.products.find(p => p.id === item.productId);
-      if (prod) prod.stock = Math.max(0, prod.stock - item.qty);
-    }
-    order.status = 'paid_processing';
-    logEvent('info', 'Payment Successful', `Order ${orderId} paid successfully via ConnectIPS.`);
-    return res.redirect(`/payment-success?orderId=${orderId}`);
-  } else {
-    order.status = 'cancelled';
-    logEvent('warning', 'Payment Cancelled', `ConnectIPS payment failed or rejected.`);
-    return res.redirect(`/payment-failure?orderId=${orderId}`);
+  const attempt = db.prepare('SELECT * FROM payment_attempts WHERE txnUuid = ?').get(txnId);
+  if (!attempt) {
+    return res.redirect('/payment-failure?error=invalid_txnid');
   }
+
+  const orderId = attempt.orderId;
+  const items = db.prepare('SELECT productId, qty FROM order_items WHERE orderId = ?').all();
+  for (const item of items) {
+    db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?').run(item.qty, item.productId);
+  }
+
+  db.prepare('UPDATE orders SET status = "paid_processing" WHERE id = ?').run(orderId);
+  db.prepare('UPDATE payment_attempts SET status = "completed" WHERE txnUuid = ?').run(txnId);
+
+  logEvent('info', 'Payment Successful', `Order ${orderId} paid successfully via ConnectIPS.`);
+  return res.redirect(`/payment-success?orderId=${orderId}`);
 });
 
 // ==========================================
-// IN-STORE OPERATIONS & DELIVERY LOGISTICS
+// OPERATIONS & LOGISTICS SPLITS
 // ==========================================
-
-// 1. GET ORDERS FOR DISPATCH
 app.get('/api/orders', (req, res) => {
-  res.json(db.orders);
+  res.json(getFullOrders());
 });
 
-// 2. DISPATCH SPLITTED TICKETS
 app.post('/api/orders/:id/dispatch', (req, res) => {
   const orderId = req.params.id;
   const { warehouseCompleted, baristaCompleted } = req.body;
-  const order = db.orders.find(o => o.id === orderId);
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
 
   if (!order) {
     return res.status(404).json({ error: 'Order not found.' });
   }
 
+  const updateFields = [];
+  const params = [];
+
   if (warehouseCompleted !== undefined) {
-    order.splitStatus.warehouse = warehouseCompleted ? 'completed' : 'pending';
+    updateFields.push('splitStatusWarehouse = ?');
+    params.push(warehouseCompleted ? 'completed' : 'pending');
   }
   if (baristaCompleted !== undefined) {
-    order.splitStatus.barista = baristaCompleted ? 'completed' : 'pending';
+    updateFields.push('splitStatusBarista = ?');
+    params.push(baristaCompleted ? 'completed' : 'pending');
   }
 
-  // Log progress
-  logEvent('info', 'Logistics Update', `Order ${orderId} splits updated. Warehouse: ${order.splitStatus.warehouse}, Barista: ${order.splitStatus.barista}`);
-  res.json(order);
+  if (updateFields.length > 0) {
+    params.push(orderId);
+    db.prepare(`UPDATE orders SET ${updateFields.join(', ')} WHERE id = ?`).run(...params);
+  }
+
+  const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  logEvent('info', 'Logistics Update', `Order ${orderId} splits updated. Warehouse: ${updatedOrder.splitStatusWarehouse}, Barista: ${updatedOrder.splitStatusWarehouse}`);
+  
+  res.json(updatedOrder);
 });
 
-// 3. RIDER DOORSTEP HANDOFF AGE CONFIRMATION
 app.post('/api/orders/:id/complete', (req, res) => {
   const orderId = req.params.id;
   const { driverConfirmedAge, idType, idNumber } = req.body;
 
-  const order = db.orders.find(o => o.id === orderId);
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
   if (!order) {
     return res.status(404).json({ error: 'Order not found.' });
   }
 
-  const needsAgeCheck = order.items.some(item => {
-    const prod = db.products.find(p => p.id === item.productId);
-    return prod && prod.isAgeRestricted;
-  });
+  const items = db.prepare('SELECT productId FROM order_items WHERE orderId = ?').all();
+  let needsAgeCheck = false;
+  for (const item of items) {
+    const prod = db.prepare('SELECT isAgeRestricted FROM products WHERE id = ?').get(item.productId);
+    if (prod && prod.isAgeRestricted) {
+      needsAgeCheck = true;
+      break;
+    }
+  }
 
   if (needsAgeCheck && !driverConfirmedAge) {
     return res.status(400).json({ error: 'Legal age verification is mandatory for orders containing alcohol items.' });
   }
 
-  order.status = 'completed';
-  order.driverConfirmedAge = driverConfirmedAge === true;
+  db.prepare('UPDATE orders SET status = "completed", driverConfirmedAge = ? WHERE id = ?').run(
+    driverConfirmedAge ? 1 : 0,
+    orderId
+  );
 
   logEvent('info', 'Order Delivered', `Order ${orderId} delivered. Customer age verified by driver via ${idType || 'ID'} ${idNumber || ''}. Session ended.`);
-  res.json({ success: true, order });
+  res.json({ success: true });
 });
 
 // ==========================================
 // SUPER ADMIN TERMINAL & REPORTING API
 // ==========================================
 app.get('/api/admin/transactions', (req, res) => {
-  // Aggregate all attempts
-  const transactions = [];
-  db.orders.forEach(order => {
-    order.paymentAttempts.forEach(attempt => {
-      transactions.push({
-        orderId: order.id,
-        user: order.user.username,
-        amount: order.totalAmount,
-        gateway: attempt.gateway,
-        txnUuid: attempt.txnUuid,
-        status: attempt.status,
-        date: order.date
-      });
-    });
-  });
-  res.json(transactions);
+  const attempts = db.prepare(`
+    SELECT pa.orderId, o.username as user, o.totalAmount as amount, pa.gateway, pa.txnUuid, pa.status, o.date
+    FROM payment_attempts pa
+    JOIN orders o ON pa.orderId = o.id
+    ORDER BY o.date DESC
+  `).all();
+  res.json(attempts);
 });
 
 app.get('/api/admin/purchases', (req, res) => {
-  res.json(db.purchases);
+  const purchases = db.prepare('SELECT * FROM purchases ORDER BY id DESC').all();
+  res.json(purchases);
 });
 
 app.post('/api/admin/purchases', (req, res) => {
@@ -933,46 +1025,52 @@ app.post('/api/admin/purchases', (req, res) => {
     return res.status(400).json({ error: 'All purchase fields required.' });
   }
 
-  const id = db.purchases.length > 0 ? Math.max(...db.purchases.map(p => p.id)) + 1 : 1;
-  const newPurchase = {
-    id,
+  const info = db.prepare(`
+    INSERT INTO purchases (productNames, supplier, quantity, cost, date)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    productNames,
+    supplier,
+    parseInt(quantity),
+    parseFloat(cost),
+    new Date().toISOString().split('T')[0]
+  );
+
+  const product = db.prepare('SELECT * FROM products WHERE name LIKE ?').get(productNames);
+  if (product) {
+    const newStock = product.stock + parseInt(quantity);
+    db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(newStock, product.id);
+    logEvent('info', 'Supply Purchased', `Restocked ${quantity} items of '${product.name}' from ${supplier}. New stock: ${newStock}`);
+  } else {
+    logEvent('info', 'Supply Purchased', `Procured ${quantity} units of '${productNames}' from ${supplier} for NPR ${cost}`);
+  }
+
+  res.json({
+    id: info.lastInsertRowid,
     productNames,
     supplier,
     quantity: parseInt(quantity),
     cost: parseFloat(cost),
     date: new Date().toISOString().split('T')[0]
-  };
-
-  db.purchases.push(newPurchase);
-
-  // Super Admin stocking flow: update product stocks
-  // Match by name or admin manually updates stock
-  const product = db.products.find(p => p.name.toLowerCase() === productNames.toLowerCase());
-  if (product) {
-    product.stock += parseInt(quantity);
-    logEvent('info', 'Supply Purchased', `Restocked ${quantity} items of '${product.name}' from ${supplier}. New stock: ${product.stock}`);
-  } else {
-    logEvent('info', 'Supply Purchased', `Procured ${quantity} units of '${productNames}' from ${supplier} for NPR ${cost}`);
-  }
-
-  res.json(newPurchase);
+  });
 });
 
 app.get('/api/admin/sales-summary', (req, res) => {
-  const paidOrders = db.orders.filter(o => o.status === 'paid_processing' || o.status === 'completed');
+  const allOrders = getFullOrders();
+  const paidOrders = allOrders.filter(o => o.status === 'paid_processing' || o.status === 'completed');
   const totalSales = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const totalPurchases = db.purchases.reduce((sum, p) => sum + p.cost, 0);
+  
+  const purchases = db.prepare('SELECT * FROM purchases').all();
+  const totalPurchases = purchases.reduce((sum, p) => sum + p.cost, 0);
   const netMargin = totalSales - totalPurchases;
 
-  // Breakdown by product categories
   const categorySales = { Liquor: 0, Groceries: 0, Coffee: 0 };
   paidOrders.forEach(order => {
     order.items.forEach(item => {
-      const prod = db.products.find(p => p.id === item.productId);
+      const prod = db.prepare('SELECT categoryId FROM products WHERE id = ?').get(item.productId);
       if (prod) {
-        const cat = db.categories.find(c => c.id === prod.categoryId);
+        const cat = db.prepare('SELECT name FROM categories WHERE id = ?').get(prod.categoryId);
         if (cat) {
-          // Approximate with item share
           categorySales[cat.name] = (categorySales[cat.name] || 0) + (item.price * item.qty);
         }
       }
@@ -984,16 +1082,17 @@ app.get('/api/admin/sales-summary', (req, res) => {
     totalPurchases,
     netMargin,
     categorySales,
-    ordersCount: db.orders.length,
+    ordersCount: allOrders.length,
     completedOrdersCount: paidOrders.length
   });
 });
 
 app.get('/api/logs', (req, res) => {
-  res.json(db.logs);
+  const logs = db.prepare('SELECT timestamp, level, event, details FROM logs ORDER BY id DESC').all();
+  res.json(logs);
 });
 
-// Fallback HTML page hooks to serve SPA success and failure redirections in development
+// SPA Redirections templates
 app.get('/payment-success', (req, res) => {
   res.send(`
     <html>
@@ -1009,9 +1108,9 @@ app.get('/payment-success', (req, res) => {
       </head>
       <body>
         <div class="card">
-          <h1>Payment Verified!</h1>
-          <p>Order ID: ${req.query.orderId || 'Unknown'}<br/>Your transaction has been securely processed and verified server-to-server.</p>
-          <a class="btn" href="/?status=success&orderId=${req.query.orderId}">Return to Ghumti Express</a>
+          <h1>✓ Payment Success</h1>
+          <p>Your payment transaction has been authenticated and processed successfully. Your order tickets have been splitted to logistics fulfillment.</p>
+          <a href="/" class="btn">Return to Storefront</a>
         </div>
       </body>
     </html>
@@ -1019,30 +1118,31 @@ app.get('/payment-success', (req, res) => {
 });
 
 app.get('/payment-failure', (req, res) => {
+  const orderId = req.query.orderId || '';
+  const error = req.query.error || 'payment_rejected';
   res.send(`
     <html>
       <head>
         <title>Payment Failed</title>
         <style>
           body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0c0f16; color: #fff; }
-          .card { background: #151a24; border: 1px solid #ef4444; border-radius: 12px; padding: 40px; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(239,68,68,0.2); }
-          h1 { color: #ef4444; margin-bottom: 10px; }
+          .card { background: #151a24; border: 1px solid #f43f5e; border-radius: 12px; padding: 40px; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(244,63,94,0.2); }
+          h1 { color: #f43f5e; margin-bottom: 10px; }
           p { color: #94a3b8; font-size: 15px; margin-bottom: 30px; }
-          .btn { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: bold; }
+          .btn { background: #f43f5e; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: bold; }
         </style>
       </head>
       <body>
         <div class="card">
-          <h1>Payment Failed!</h1>
-          <p>Order: ${req.query.orderId || 'Unknown'}<br/>Reason: ${req.query.error || 'User cancelled or transaction was rejected by signature anti-tamper safeguards.'}</p>
-          <a class="btn" href="/?status=failed&orderId=${req.query.orderId}">Return to Store</a>
+          <h1>✗ Payment Failed</h1>
+          <p>Transaction failed or was rejected by gateway verification checks. Error: ${error.toUpperCase()}</p>
+          <a href="/" class="btn">Return to Checkout</a>
         </div>
       </body>
     </html>
   `);
 });
 
-// Start listening
 app.listen(PORT, () => {
   logEvent('info', 'Server Start', `Ghumti Express server running on http://localhost:${PORT}`);
 });

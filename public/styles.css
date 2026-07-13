@@ -2211,6 +2211,9 @@ body { padding-bottom: 0; }
 .search-bar-container input { padding: 0 14px; min-width: 80px; }
 .search-submit-btn { height: 100%; padding: 0 20px; border: 0; background: #f57224; color: #fff; font-family: var(--font-primary); font-weight: 700; cursor: pointer; }
 .nav-actions { gap: 12px; }
+.install-app-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #c2410c; font-family: var(--font-primary); font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.install-app-btn:hover { border-color: #fb923c; background: #ffedd5; }
+.install-app-btn[hidden] { display: none; }
 .user-profile-badge { padding: 8px 10px; border: 0; background: transparent; }
 .cart-toggle-btn { padding: 8px 12px; border-color: #e2e8f0; }
 .cart-label { display: flex; flex-direction: column; line-height: 1.05; text-align: left; }
@@ -2280,7 +2283,7 @@ body { padding-bottom: 0; }
 }
 
 @media (max-width: 800px) {
-  .trust-item:nth-child(n+3), .search-category-label, .cart-label, .user-profile-badge { display: none; }
+  .trust-item:nth-child(n+3), .search-category-label, .cart-label, .user-profile-badge, .install-app-btn { display: none; }
   .ecommerce-header { position: relative; }
   .main-nav-bar .nav-container { padding: 0 14px; flex-wrap: wrap; }
   .logo-area { order: 1; }
