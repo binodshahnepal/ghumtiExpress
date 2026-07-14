@@ -38,13 +38,14 @@ class ApiService {
     }
   }
 
-  static Future<User> signup(String username, String password, String dob) async {
+  static Future<User> signup(String username, String password, String fullName, String dob) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/api/auth/signup'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': username,
         'password': password,
+        'fullName': fullName,
         'dob': dob,
       }),
     );

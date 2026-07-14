@@ -14,6 +14,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _fullNameController = TextEditingController();
   final _dobController = TextEditingController(); // YYYY-MM-DD
   bool _isLogin = true;
   bool _isLoading = false;
@@ -23,6 +24,7 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _fullNameController.dispose();
     _dobController.dispose();
     super.dispose();
   }
@@ -30,6 +32,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _submit() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
+    final fullName = _fullNameController.text.trim();
     final dob = _dobController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
@@ -37,9 +40,15 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
-    if (!_isLogin && dob.isEmpty) {
-      setState(() => _errorMessage = 'Date of birth is required for registration.');
-      return;
+    if (!_isLogin) {
+      if (fullName.isEmpty) {
+        setState(() => _errorMessage = 'Full Name is required for registration.');
+        return;
+      }
+      if (dob.isEmpty) {
+        setState(() => _errorMessage = 'Date of birth is required for registration.');
+        return;
+      }
     }
 
     // Validate DOB format (YYYY-MM-DD)
@@ -68,7 +77,7 @@ class _AuthScreenState extends State<AuthScreen> {
         final user = await ApiService.login(username, password);
         appState.setUser(user);
       } else {
-        final user = await ApiService.signup(username, password, dob);
+        final user = await ApiService.signup(username, password, fullName, dob);
         appState.setUser(user);
       }
       if (mounted) {
@@ -166,6 +175,26 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Text(
                         _errorMessage,
                         style: const TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (!_isLogin) ...[
+                    TextField(
+                      controller: _fullNameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Full Name',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: const Icon(Icons.badge, color: Colors.amber),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.amber),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Enter Node.js server base URL. Use http://10.0.2.2:5000 for local emulator or http://<your-local-ip>:5000',
+                'Enter Node.js server base URL. Use http://10.0.2.2:5005 for local emulator or http://<your-local-ip>:5005',
                 style: TextStyle(color: Colors.grey[400], fontSize: 13),
               ),
               const SizedBox(height: 16),
@@ -242,6 +242,49 @@ class _HomeScreenState extends State<HomeScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Welcome User Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 4.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              user?.fullName != null && user!.fullName!.isNotEmpty
+                                  ? user.fullName!
+                                  : (user?.username ?? 'Guest'),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.amber.withOpacity(0.1),
+                        radius: 20,
+                        child: const Icon(
+                          Icons.waving_hand,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // Search bar
                 Padding(
                   padding: const EdgeInsets.all(12.0),

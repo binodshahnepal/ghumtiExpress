@@ -1,6 +1,7 @@
 class User {
   final int id;
   final String username;
+  final String? fullName;
   final String? dob;
   final String role;
   final String? token;
@@ -8,6 +9,7 @@ class User {
   User({
     required this.id,
     required this.username,
+    this.fullName,
     this.dob,
     required this.role,
     this.token,
@@ -17,6 +19,7 @@ class User {
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',
+      fullName: json['fullName'],
       dob: json['dob'],
       role: json['role'] ?? 'Customer',
       token: json['token'],
@@ -27,6 +30,7 @@ class User {
     return {
       'id': id,
       'username': username,
+      'fullName': fullName,
       'role': role,
       'dob': dob,
       'token': token,
